@@ -181,50 +181,29 @@ export default function GamePage() {
     });
   }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
 
-  const getDiscardMatchingCardIds = useCallback((): Set<string> => {
-    const matching = new Set<string>();
-    if (!gameState || !myHand) return matching;
-    const topCard = gameState.discardPile[gameState.discardPile.length - 1];
-    if (!topCard) return matching;
-    // Find cards that form a meld with the top discard
-    for (let i = 0; i < myHand.length; i++) {
-      for (let j = i + 1; j < myHand.length; j++) {
-        if (isValidMeld([topCard, myHand[i], myHand[j]])) {
-          matching.add(myHand[i].id);
-          matching.add(myHand[j].id);
-        }
-      }
-      for (let j = i + 1; j < myHand.length; j++) {
-        for (let k = j + 1; k < myHand.length; k++) {
-          if (isValidMeld([topCard, myHand[i], myHand[j], myHand[k]])) {
-            matching.add(myHand[i].id);
-            matching.add(myHand[j].id);
-            matching.add(myHand[k].id);
-          }
-        }
-      }
-    }
-    // Check lay-off matches
-    const allMelds = gameState.players.flatMap(p => p.melds);
-    for (const meld of allMelds) {
-      if (canLayOff(topCard, meld)) {
-        // Mark it as possible via lay-off (no specific hand cards needed)
-        matching.add('__layoff__');
-      }
-    }
-    return matching;
-  }, [gameState, myHand]);
-
   const canPickDiscard = useCallback(() => {
     if (!gameState || !myHand) return false;
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
     if (!topCard) return false;
-    const matching = getDiscardMatchingCardIds();
-    if (matching.size > 0) return true;
+    // Check if top discard can form a meld with any 2+ cards in hand
+    for (let i = 0; i < myHand.length; i++) {
+      for (let j = i + 1; j < myHand.length; j++) {
+        if (isValidMeld([topCard, myHand[i], myHand[j]])) return true;
+      }
+      // Check 3-card combos for runs
+      for (let j = i + 1; j < myHand.length; j++) {
+        for (let k = j + 1; k < myHand.length; k++) {
+          if (isValidMeld([topCard, myHand[i], myHand[j], myHand[k]])) return true;
+        }
+      }
+    }
+    // Check if it can lay off on any existing meld
+    const allMelds = gameState.players.flatMap(p => p.melds);
+    for (const meld of allMelds) {
+      if (canLayOff(topCard, meld)) return true;
+    }
     return false;
-  }, [gameState, myHand, getDiscardMatchingCardIds]);
-
-  const discardMatchIds = isMyTurn && gameState?.turnPhase === 'draw' && gameState?.discardPile?.length > 0 ? getDiscardMatchingCardIds() : new Set<string>();
+  }, [gameState, myHand]);
 
   const drawFromDiscard = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
@@ -635,16 +614,6 @@ export default function GamePage() {
             </AnimatePresence>
           </motion.div>
           <span className="text-[10px] text-muted-foreground">Discard ({gameState.discardPile.length})</span>
-          {isMyTurn && gameState.turnPhase === 'draw' && topDiscard && (
-            <span className={cn(
-              "text-[9px] font-medium mt-0.5",
-              canPickDiscard() ? "text-accent" : "text-destructive"
-            )}>
-              {canPickDiscard()
-                ? `✓ ${discardMatchIds.size - (discardMatchIds.has('__layoff__') ? 1 : 0)} match${discardMatchIds.size - (discardMatchIds.has('__layoff__') ? 1 : 0) !== 1 ? 'es' : ''}${discardMatchIds.has('__layoff__') ? ' + lay off' : ''}`
-                : '✗ No matches'}
-            </span>
-          )}
         </div>
 
         {/* Game info */}
@@ -791,7 +760,6 @@ export default function GamePage() {
                   card={card}
                   index={0}
                   selected={selectedCards.includes(card.id)}
-                  highlighted={discardMatchIds.has(card.id)}
                   onClick={() => toggleCardSelection(card.id)}
                 />
               </motion.div>
