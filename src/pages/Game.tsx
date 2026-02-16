@@ -358,8 +358,8 @@ export default function GamePage() {
           animate={{ opacity: 1 }}
           className="text-center space-y-6 max-w-sm"
         >
-          <h2 className="text-3xl font-display text-primary gold-glow">Waiting for Opponent</h2>
-          <p className="text-muted-foreground">Share this link with your friend:</p>
+          <h2 className="text-3xl font-display text-primary gold-glow">🦕 Waiting for Dino Buddy</h2>
+          <p className="text-muted-foreground">Share this link with your dino friend:</p>
           <div className="bg-card/80 rounded-xl p-4 border border-border">
             <p className="text-2xl font-mono font-bold tracking-[0.3em] text-primary mb-3">{roomCode}</p>
             <Button onClick={copyRoomCode} variant="outline" className="border-primary text-primary">
@@ -551,7 +551,7 @@ export default function GamePage() {
               className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
             >
               <h2 className="text-3xl font-display text-primary gold-glow">
-                {gameState.winner === playerIndex ? '🎉 You Win!' : '😞 You Lose'}
+                {gameState.winner === playerIndex ? '🦖 You Win! RAWR!' : '🦴 You Lose...'}
               </h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
               <div className="flex gap-3 justify-center pt-2">

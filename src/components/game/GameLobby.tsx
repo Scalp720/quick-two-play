@@ -76,10 +76,10 @@ export function GameLobby() {
             animate={{ y: 0 }}
             className="text-5xl font-display font-black text-primary gold-glow"
           >
-            Tong Its
+            🦕 Dino Its
           </motion.h1>
           <p className="text-muted-foreground">
-            Play the classic Filipino card game with a friend online
+            Play the prehistoric card game with a friend online! RAWR! 🦖
           </p>
         </div>
 
@@ -101,12 +101,12 @@ export function GameLobby() {
               disabled={loading}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg h-12"
             >
-              {loading ? 'Creating...' : '🃏 Create Game Room'}
+              {loading ? 'Hatching...' : '🥚 Create Dino Den'}
             </Button>
 
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground uppercase">or join a room</span>
+              <span className="text-xs text-muted-foreground uppercase">or join a den</span>
               <div className="h-px flex-1 bg-border" />
             </div>
 
@@ -114,7 +114,7 @@ export function GameLobby() {
               <Input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="Room code"
+                placeholder="Den code"
                 className="bg-secondary border-border uppercase tracking-widest font-mono"
                 maxLength={6}
               />
@@ -130,7 +130,7 @@ export function GameLobby() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
-          Create a room and share the code with your friend to start playing!
+          Create a den and share the code with your dino buddy to start playing! 🌋
         </p>
       </motion.div>
     </div>
