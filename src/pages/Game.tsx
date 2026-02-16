@@ -6,6 +6,7 @@ import {
   canLayOff, canLayOffMultiple, calculateHandPoints, sortHand, sortByRank, sortByGroups, getSuitSymbol, getSuitColor,
 } from '@/lib/tongits';
 import { PlayingCard, CardBack } from '@/components/game/PlayingCard';
+import { CoinFlip } from '@/components/game/CoinFlip';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -89,6 +90,9 @@ export default function GamePage() {
           updatedPlayers[0].name,
           playerName
         );
+        // Inject themes into players
+        (newGame.players[0] as any).theme = updatedPlayers[0].theme;
+        (newGame.players[1] as any).theme = getSavedTheme();
 
         await supabase
           .from('game_rooms')
@@ -389,6 +393,9 @@ export default function GamePage() {
         gameState.players[0].name,
         gameState.players[1].name
       );
+      // Preserve themes
+      (newGame.players[0] as any).theme = (gameState.players[0] as any).theme;
+      (newGame.players[1] as any).theme = (gameState.players[1] as any).theme;
       await updateGame(newGame);
       setSelectedCards([]);
     } else {
@@ -397,6 +404,15 @@ export default function GamePage() {
       toast.success('Rematch requested! Waiting for opponent...');
     }
   };
+
+  const handleCoinFlipComplete = useCallback(async () => {
+    if (!gameState || !roomId) return;
+    await updateGame({
+      ...gameState,
+      phase: 'playing',
+      lastAction: `${gameState.players[gameState.firstPlayer ?? 0].name} goes first!`,
+    });
+  }, [gameState, roomId, updateGame]);
 
   // Waiting for opponent
   if (waiting) {
@@ -667,6 +683,18 @@ export default function GamePage() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Coin flip overlay */}
+      {gameState.phase === 'coin_flip' && gameState.firstPlayer !== undefined && (
+        <CoinFlip
+          player0Name={gameState.players[0].name}
+          player1Name={gameState.players[1].name}
+          player0Theme={(gameState.players[0] as any).theme || 'rex'}
+          player1Theme={(gameState.players[1] as any).theme || 'bronto'}
+          winnerIndex={gameState.firstPlayer!}
+          onComplete={handleCoinFlipComplete}
+        />
+      )}
 
       {/* Game over overlay */}
       <AnimatePresence>

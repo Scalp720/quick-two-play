@@ -25,12 +25,13 @@ export interface GameState {
     name: string;
   }[];
   currentTurn: number;
-  phase: 'waiting' | 'playing' | 'finished';
+  phase: 'waiting' | 'coin_flip' | 'playing' | 'finished';
   turnPhase: 'draw' | 'action' | 'discard';
   winner: number | null;
   winMethod: string | null;
   lastAction: string | null;
-  rematchRequested?: number | null; // player index who requested rematch
+  rematchRequested?: number | null;
+  firstPlayer?: number; // result of coin flip
 }
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -137,9 +138,22 @@ export function getSuitColor(suit: Suit): 'red' | 'black' {
 }
 
 export function initializeGame(player1Id: string, player2Id: string, player1Name: string, player2Name: string): GameState {
+  const firstPlayer = Math.random() < 0.5 ? 0 : 1;
   const deck = createDeck();
-  const { hands, remaining } = dealCards(deck, 2);
+  // Deal: the first player gets 13 cards (extra card), second gets 12
+  const hands: Card[][] = [[], []];
+  const remaining = [...deck];
   
+  // Deal 12 cards each
+  for (let i = 0; i < 12; i++) {
+    for (let p = 0; p < 2; p++) {
+      const dealIdx = p === 0 ? firstPlayer : (1 - firstPlayer);
+      if (remaining.length > 0) hands[dealIdx].push(remaining.pop()!);
+    }
+  }
+  // First player gets extra (13th) card
+  if (remaining.length > 0) hands[firstPlayer].push(remaining.pop()!);
+
   return {
     deck: remaining,
     discardPile: [],
@@ -147,12 +161,13 @@ export function initializeGame(player1Id: string, player2Id: string, player1Name
       { hand: hands[0], melds: [], playerId: player1Id, name: player1Name },
       { hand: hands[1], melds: [], playerId: player2Id, name: player2Name },
     ],
-    currentTurn: 0, // Player 1 starts (has 13 cards, goes first by discarding or melding)
-    phase: 'playing',
-    turnPhase: 'action', // First player already has 13 cards, skip draw
+    currentTurn: firstPlayer,
+    phase: 'coin_flip',
+    turnPhase: 'action',
     winner: null,
     winMethod: null,
-    lastAction: 'Game started! Player 1 goes first.',
+    lastAction: null,
+    firstPlayer,
   };
 }
 
