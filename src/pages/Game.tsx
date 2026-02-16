@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
+import dinoDance from '@/assets/dino-dance.gif';
 
 export default function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -836,17 +837,11 @@ export default function GamePage() {
               className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
             >
               {gameState.winner === playerIndex ? (
-                <motion.div className="relative mx-auto w-24 h-24">
-                  <motion.img
-                    src={myTheme.image}
-                    alt={myTheme.name}
-                    className="w-24 h-24 object-contain"
-                    animate={{
-                      rotate: [0, -10, 10, -10, 10, 0],
-                      y: [0, -15, 0, -15, 0],
-                      scale: [1, 1.1, 1, 1.1, 1],
-                    }}
-                    transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 0.5 }}
+                <motion.div className="relative mx-auto w-32 h-32">
+                  <img
+                    src={dinoDance}
+                    alt="Dancing dino"
+                    className="w-32 h-32 object-contain"
                   />
                   <motion.div
                     className="absolute -top-2 -right-2 text-2xl"
