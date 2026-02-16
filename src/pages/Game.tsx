@@ -368,11 +368,37 @@ export default function GamePage() {
     playFight();
     updateGame({
       ...gameState,
+      fightChallenger: playerIndex,
+      lastAction: `${me?.name} is challenging to a Fight! ⚔️`,
+    });
+  }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
+
+  const acceptFight = useCallback(() => {
+    if (!gameState || gameState.fightChallenger === null || gameState.fightChallenger === undefined) return;
+    const challengerIdx = gameState.fightChallenger;
+    const challengerPoints = calculateHandPoints(gameState.players[challengerIdx].hand);
+    const defenderIdx = challengerIdx === 0 ? 1 : 0;
+    const defenderPoints = calculateHandPoints(gameState.players[defenderIdx].hand);
+    const winner = challengerPoints <= defenderPoints ? challengerIdx : defenderIdx;
+
+    playFight();
+    updateGame({
+      ...gameState,
       phase: 'finished',
       winner,
-      winMethod: `Fight! ${gameState.players[winner].name} wins with ${Math.min(myPoints, opponentPoints)} vs ${Math.max(myPoints, opponentPoints)} points!`,
+      fightChallenger: null,
+      winMethod: `Fight! ${gameState.players[winner].name} wins with ${Math.min(challengerPoints, defenderPoints)} vs ${Math.max(challengerPoints, defenderPoints)} points!`,
     });
-  }, [gameState, isMyTurn, myHand, playerIndex, opponentIndex, updateGame, me, opponent]);
+  }, [gameState, updateGame]);
+
+  const declineFight = useCallback(() => {
+    if (!gameState || gameState.fightChallenger === null || gameState.fightChallenger === undefined) return;
+    updateGame({
+      ...gameState,
+      fightChallenger: null,
+      lastAction: `${gameState.players[playerIndex].name} declined the fight challenge`,
+    });
+  }, [gameState, playerIndex, updateGame]);
 
   const copyRoomCode = () => {
     const url = `${window.location.origin}/game/${roomCode}`;
@@ -611,9 +637,38 @@ export default function GamePage() {
         </div>
       )}
 
-      {!isMyTurn && gameState.phase === 'playing' && (
-        <div className="text-center py-2 text-sm text-muted-foreground">
-          Waiting for {opponent?.name}'s move...
+      {!isMyTurn && gameState.phase === 'playing' && gameState.fightChallenger === undefined || gameState.fightChallenger === null ? (
+        !isMyTurn && gameState.phase === 'playing' && (
+          <div className="text-center py-2 text-sm text-muted-foreground">
+            Waiting for {opponent?.name}'s move...
+          </div>
+        )
+      ) : null}
+
+      {/* Fight challenge notification for opponent */}
+      {gameState.phase === 'playing' && gameState.fightChallenger !== null && gameState.fightChallenger !== undefined && gameState.fightChallenger !== playerIndex && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-3 my-2 p-4 rounded-xl border-2 border-accent bg-card/90 text-center space-y-3"
+        >
+          <p className="text-lg font-display text-accent">⚔️ {opponent?.name} challenges you to a Fight!</p>
+          <p className="text-xs text-muted-foreground">If you accept, the player with fewer points wins.</p>
+          <div className="flex gap-3 justify-center">
+            <Button size="sm" onClick={acceptFight} className="bg-accent text-accent-foreground font-bold">
+              Accept Fight
+            </Button>
+            <Button size="sm" variant="outline" onClick={declineFight}>
+              Decline
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Waiting for fight response */}
+      {gameState.phase === 'playing' && gameState.fightChallenger === playerIndex && (
+        <div className="text-center py-2 text-sm text-accent animate-pulse">
+          ⚔️ Waiting for {opponent?.name} to respond to your fight challenge...
         </div>
       )}
 

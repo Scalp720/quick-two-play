@@ -31,6 +31,7 @@ export interface GameState {
   winMethod: string | null;
   lastAction: string | null;
   rematchRequested?: number | null;
+  fightChallenger?: number | null; // player index who called fight
   firstPlayer?: number; // result of coin flip
 }
 
