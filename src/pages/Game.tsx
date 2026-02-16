@@ -8,6 +8,7 @@ import {
 import { PlayingCard, CardBack } from '@/components/game/PlayingCard';
 import { CoinFlip } from '@/components/game/CoinFlip';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
+import { EmotePicker, EmoteBubble } from '@/components/game/EmoteDisplay';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ export default function GamePage() {
   const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
   const [drawAnim, setDrawAnim] = useState<'deck' | 'discard' | null>(null);
   const [discardAnim, setDiscardAnim] = useState<string | null>(null);
+  const [activeEmote, setActiveEmote] = useState<{ emote: string; from: number } | null>(null);
   const playerId = useRef(getOrCreatePlayerId());
 
   function getOrCreatePlayerId() {
@@ -382,16 +384,17 @@ export default function GamePage() {
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me]);
 
   const callDraw = useCallback(() => {
-    if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
+    if (!gameState || !isMyTurn) return;
+    // Fight is only available BEFORE drawing (during draw phase)
+    if (gameState.turnPhase !== 'draw') {
+      toast.error('You can only call Fight before drawing a card!');
+      return;
+    }
     // Can only call draw if you have melds (exposed)
     if (me!.melds.length === 0) {
       toast.error('You need at least one meld to call a draw!');
       return;
     }
-
-    const myPoints = calculateHandPoints(myHand);
-    const opponentPoints = calculateHandPoints(opponent!.hand);
-    const winner = myPoints <= opponentPoints ? playerIndex : opponentIndex;
 
     playFight();
     updateGame({
@@ -468,6 +471,30 @@ export default function GamePage() {
     });
   }, [gameState, roomId, updateGame]);
 
+  const sendEmote = useCallback(async (emote: string) => {
+    if (!gameState) return;
+    // Update game state with emote
+    const newState = {
+      ...gameState,
+      activeEmote: { emote, from: playerIndex },
+    };
+    await updateGame(newState as any);
+    setActiveEmote({ emote, from: playerIndex });
+    setTimeout(() => {
+      setActiveEmote(null);
+    }, 2500);
+  }, [gameState, playerIndex, updateGame]);
+
+  // Watch for incoming emotes from opponent
+  useEffect(() => {
+    if (!gameState) return;
+    const emoteData = (gameState as any).activeEmote;
+    if (emoteData && emoteData.from !== playerIndex) {
+      setActiveEmote(emoteData);
+      setTimeout(() => setActiveEmote(null), 2500);
+    }
+  }, [(gameState as any)?.activeEmote?.emote, (gameState as any)?.activeEmote?.from]);
+
   // Waiting for opponent
   if (waiting) {
     return (
@@ -511,8 +538,9 @@ export default function GamePage() {
           <ArrowLeft className="w-4 h-4 mr-1" /> Leave
         </Button>
         <div className="text-xs text-muted-foreground font-mono">{roomCode}</div>
-        <div className="text-xs text-muted-foreground">
-          Deck: {gameState.deck.length}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Deck: {gameState.deck.length}</span>
+          <EmotePicker onSendEmote={sendEmote} />
         </div>
       </div>
 
@@ -649,20 +677,23 @@ export default function GamePage() {
           >
             Discard
           </Button>
+        </div>
+      )}
+
+      {isMyTurn && gameState.turnPhase === 'draw' && (
+        <div className="text-center py-2 space-y-2">
+          <p className="text-sm text-primary animate-pulse">
+            Draw a card from the deck or discard pile
+          </p>
           <Button
             size="sm"
             onClick={callDraw}
+            disabled={me!.melds.length === 0}
             variant="outline"
             className="border-accent text-accent font-bold"
           >
             ⚔️ Fight
           </Button>
-        </div>
-      )}
-
-      {isMyTurn && gameState.turnPhase === 'draw' && (
-        <div className="text-center py-2 text-sm text-primary animate-pulse">
-          Draw a card from the deck or discard pile
         </div>
       )}
 
@@ -767,6 +798,16 @@ export default function GamePage() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Emote bubble */}
+      <AnimatePresence>
+        {activeEmote && (
+          <EmoteBubble
+            emote={activeEmote.emote}
+            isOpponent={activeEmote.from !== playerIndex}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Coin flip overlay */}
       {gameState.phase === 'coin_flip' && gameState.firstPlayer !== undefined && (
