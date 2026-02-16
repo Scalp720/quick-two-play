@@ -122,15 +122,15 @@
 
   .playing-card {
     @apply rounded-lg bg-[hsl(var(--card-white))] card-shadow;
-    width: 60px;
-    height: 84px;
-    font-size: 14px;
+    width: 52px;
+    height: 74px;
+    font-size: 11px;
   }
 
   .playing-card-back {
     @apply rounded-lg card-shadow;
-    width: 60px;
-    height: 84px;
+    width: 52px;
+    height: 74px;
     background: linear-gradient(135deg, hsl(145 45% 30%) 0%, hsl(145 35% 20%) 100%);
     border: 2px solid hsl(var(--gold-dim));
   }
