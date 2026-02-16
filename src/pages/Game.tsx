@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
   GameState, Card, initializeGame, generatePlayerId, isValidMeld,
-  canLayOff, calculateHandPoints, sortHand, sortByRank, sortByGroups, getSuitSymbol, getSuitColor,
+  canLayOff, canLayOffMultiple, calculateHandPoints, sortHand, sortByRank, sortByGroups, getSuitSymbol, getSuitColor,
 } from '@/lib/tongits';
 import { PlayingCard, CardBack } from '@/components/game/PlayingCard';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
@@ -247,13 +247,13 @@ export default function GamePage() {
 
   const layOffCard = useCallback((meldId: string) => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
-    if (selectedCards.length !== 1) {
-      toast.error('Select exactly 1 card to lay off');
+    if (selectedCards.length === 0) {
+      toast.error('Select card(s) to sapaw');
       return;
     }
 
-    const card = myHand.find(c => c.id === selectedCards[0]);
-    if (!card) return;
+    const cards = myHand.filter(c => selectedCards.includes(c.id));
+    if (cards.length === 0) return;
 
     // Find meld across all players
     let targetMeld: any = null;
@@ -267,34 +267,37 @@ export default function GamePage() {
       }
     }
 
-    if (!targetMeld || !canLayOff(card, targetMeld)) {
-      toast.error('Cannot lay off this card on that meld');
+    if (!targetMeld || !canLayOffMultiple(cards, targetMeld)) {
+      toast.error('Cannot sapaw these cards on that meld');
       return;
     }
 
-    const newHand = myHand.filter(c => c.id !== card.id);
+    const newHand = myHand.filter(c => !selectedCards.includes(c.id));
     const newPlayers = [...gameState.players];
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
     newPlayers[targetPlayerIdx] = {
       ...newPlayers[targetPlayerIdx],
       melds: newPlayers[targetPlayerIdx].melds.map(m =>
-        m.id === meldId ? { ...m, cards: [...m.cards, card] } : m
+        m.id === meldId ? { ...m, cards: [...m.cards, ...cards] } : m
       ),
     };
 
+    playMeld();
+
     if (newHand.length === 0) {
+      playWin();
       updateGame({
         ...gameState,
         players: newPlayers,
         phase: 'finished',
         winner: playerIndex,
-        winMethod: `Tong Its! ${me?.name} wins!`,
+        winMethod: `Tong Its! ${me?.name} wins by sapaw!`,
       });
     } else {
       updateGame({
         ...gameState,
         players: newPlayers,
-        lastAction: `${me?.name} laid off a card`,
+        lastAction: `${me?.name} sapaw'd ${cards.length} card(s)`,
       });
     }
     setSelectedCards([]);
@@ -458,7 +461,7 @@ export default function GamePage() {
         <div className="flex gap-1 flex-wrap">
           {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
-        <MeldDisplay melds={opponent?.melds || []} label="Opponent's melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length === 1} />
+        <MeldDisplay melds={opponent?.melds || []} label="Opponent's melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} />
       </div>
 
       {/* Center - deck & discard */}
@@ -544,7 +547,7 @@ export default function GamePage() {
 
       {/* My melds */}
       <div className="px-3">
-        <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length === 1} />
+        <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} />
       </div>
 
       {/* Action buttons */}

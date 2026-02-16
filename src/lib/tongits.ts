@@ -116,6 +116,11 @@ export function canLayOff(card: Card, meld: Meld): boolean {
   return isValidSet(testCards) || isValidRun(testCards);
 }
 
+export function canLayOffMultiple(cards: Card[], meld: Meld): boolean {
+  const testCards = [...meld.cards, ...cards];
+  return isValidSet(testCards) || isValidRun(testCards);
+}
+
 export function getSuitSymbol(suit: Suit): string {
   const symbols: Record<Suit, string> = {
     hearts: '♥',
