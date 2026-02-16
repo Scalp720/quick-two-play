@@ -30,6 +30,7 @@ export interface GameState {
   winner: number | null;
   winMethod: string | null;
   lastAction: string | null;
+  rematchRequested?: number | null; // player index who requested rematch
 }
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];

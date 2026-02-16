@@ -378,16 +378,24 @@ export default function GamePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const playAgain = async () => {
+  const requestRematch = async () => {
     if (!gameState || !roomId) return;
-    const newGame = initializeGame(
-      gameState.players[0].playerId,
-      gameState.players[1].playerId,
-      gameState.players[0].name,
-      gameState.players[1].name
-    );
-    await updateGame(newGame);
-    setSelectedCards([]);
+    
+    // If opponent already requested, start the game
+    if (gameState.rematchRequested !== null && gameState.rematchRequested !== undefined && gameState.rematchRequested !== playerIndex) {
+      const newGame = initializeGame(
+        gameState.players[0].playerId,
+        gameState.players[1].playerId,
+        gameState.players[0].name,
+        gameState.players[1].name
+      );
+      await updateGame(newGame);
+      setSelectedCards([]);
+    } else {
+      // Request rematch
+      await updateGame({ ...gameState, rematchRequested: playerIndex });
+      toast.success('Rematch requested! Waiting for opponent...');
+    }
   };
 
   // Waiting for opponent
@@ -684,10 +692,20 @@ export default function GamePage() {
                 {gameState.winner === playerIndex ? 'You Win! RAWR!' : '🦴 You Lose...'}
               </h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
-              <div className="flex gap-3 justify-center pt-2">
-                <Button onClick={playAgain} className="bg-primary text-primary-foreground">
-                  Play Again
-                </Button>
+              <div className="flex flex-col gap-3 items-center pt-2">
+                {gameState.rematchRequested === playerIndex ? (
+                  <p className="text-sm text-muted-foreground animate-pulse">Waiting for opponent to accept...</p>
+                ) : gameState.rematchRequested !== null && gameState.rematchRequested !== undefined ? (
+                  <Button onClick={requestRematch} className="bg-primary text-primary-foreground">
+                    <img src={myTheme.image} alt="" className="w-5 h-5 object-contain mr-1" />
+                    Accept Rematch!
+                  </Button>
+                ) : (
+                  <Button onClick={requestRematch} className="bg-primary text-primary-foreground">
+                    <img src={myTheme.image} alt="" className="w-5 h-5 object-contain mr-1" />
+                    Play Again
+                  </Button>
+                )}
                 <Button variant="outline" onClick={() => navigate('/')}>
                   Leave
                 </Button>
