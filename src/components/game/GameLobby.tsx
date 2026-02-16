@@ -169,7 +169,12 @@ export function GameLobby() {
                 color: 'hsl(0 0% 100%)',
               }}
             >
-              {loading ? 'Hatching...' : `${currentTheme.emoji} Create Dino Den`}
+              {loading ? 'Hatching...' : (
+                <>
+                  <img src={currentTheme.image} alt={currentTheme.name} className="w-6 h-6 object-contain mr-1 inline-block" />
+                  Create Dino Den
+                </>
+              )}
             </Button>
 
             <div className="flex items-center gap-3">
