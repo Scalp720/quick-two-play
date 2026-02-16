@@ -1,4 +1,5 @@
 import { Card as CardType, getSuitSymbol, getSuitColor } from '@/lib/tongits';
+import { DinoTheme } from '@/lib/dinoThemes';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -9,12 +10,30 @@ interface PlayingCardProps {
   faceDown?: boolean;
   index?: number;
   small?: boolean;
+  theme?: DinoTheme;
 }
 
-export function PlayingCard({ card, selected, onClick, faceDown, index = 0, small }: PlayingCardProps) {
+export function PlayingCard({ card, selected, onClick, faceDown, index = 0, small, theme }: PlayingCardProps) {
   const color = getSuitColor(card.suit);
   const symbol = getSuitSymbol(card.suit);
   const isRed = color === 'red';
+
+  if (faceDown && theme) {
+    return (
+      <motion.div
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+        className="w-[52px] h-[74px] rounded-lg card-shadow flex items-center justify-center cursor-default"
+        style={{
+          background: `linear-gradient(135deg, hsl(${theme.colors.cardBack}), hsl(${theme.colors.cardBackEnd}))`,
+          border: `2px solid hsl(${theme.colors.border})`,
+        }}
+      >
+        <span className="text-lg font-bold opacity-60">{theme.emoji}</span>
+      </motion.div>
+    );
+  }
 
   if (faceDown) {
     return (
@@ -57,7 +76,24 @@ export function PlayingCard({ card, selected, onClick, faceDown, index = 0, smal
   );
 }
 
-export function CardBack({ index = 0 }: { index?: number }) {
+export function CardBack({ index = 0, theme }: { index?: number; theme?: DinoTheme }) {
+  if (theme) {
+    return (
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: index * 0.02 }}
+        className="w-[52px] h-[74px] rounded-lg card-shadow flex items-center justify-center"
+        style={{
+          background: `linear-gradient(135deg, hsl(${theme.colors.cardBack}), hsl(${theme.colors.cardBackEnd}))`,
+          border: `2px solid hsl(${theme.colors.border})`,
+        }}
+      >
+        <span className="opacity-40 text-sm">{theme.emoji}</span>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ scale: 0.8 }}

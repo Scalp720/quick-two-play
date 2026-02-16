@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
+import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
 
 export default function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -38,6 +39,8 @@ export default function GamePage() {
   }
 
   const playerName = localStorage.getItem('tongits_player_name') || 'Player';
+  const myTheme = getThemeById(getSavedTheme());
+
 
   // Join room and subscribe
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function GamePage() {
         // Join as player 2
         const updatedPlayers = [
           ...state.players,
-          { playerId: playerId.current, name: playerName },
+          { playerId: playerId.current, name: playerName, theme: getSavedTheme() },
         ];
         setPlayerIndex(1);
 
@@ -138,6 +141,7 @@ export default function GamePage() {
   const opponentIndex = playerIndex === 0 ? 1 : 0;
   const opponent = gameState?.players[opponentIndex];
   const me = gameState?.players[playerIndex];
+  const opponentTheme = getThemeById((opponent as any)?.theme || 'raptor');
 
   const drawFromDeck = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
@@ -420,20 +424,24 @@ export default function GamePage() {
       <div className="p-3 space-y-2">
         <div className="flex items-center gap-2">
           <span className={cn(
-            "text-sm font-semibold",
-            gameState.currentTurn === opponentIndex ? "text-primary" : "text-muted-foreground"
+            "text-sm font-semibold flex items-center gap-1",
+            gameState.currentTurn === opponentIndex ? "text-foreground" : "text-muted-foreground"
           )}>
+            <span>{opponentTheme.emoji}</span>
             {opponent?.name || 'Opponent'}
           </span>
           {gameState.currentTurn === opponentIndex && (
-            <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">Their turn</span>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full text-white"
+              style={{ background: `hsl(${opponentTheme.colors.primary} / 0.6)` }}
+            >Their turn</span>
           )}
           <span className="text-xs text-muted-foreground ml-auto">
             {opponent?.hand.length || 0} cards
           </span>
         </div>
         <div className="flex gap-1 flex-wrap">
-          {opponent?.hand.map((_, i) => <CardBack key={i} index={i} />)}
+          {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
         <MeldDisplay melds={opponent?.melds || []} label="Opponent's melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length === 1} />
       </div>
@@ -448,13 +456,17 @@ export default function GamePage() {
             transition={{ duration: 0.3 }}
             whileTap={isMyTurn && gameState.turnPhase === 'draw' ? { scale: 0.92 } : {}}
             className={cn(
-              "playing-card-back flex items-center justify-center relative",
+              "w-[52px] h-[74px] rounded-lg card-shadow flex items-center justify-center relative",
               isMyTurn && gameState.turnPhase === 'draw' && "cursor-pointer animate-pulse-gold"
             )}
+            style={{
+              background: `linear-gradient(135deg, hsl(${myTheme.colors.cardBack}), hsl(${myTheme.colors.cardBackEnd}))`,
+              border: `2px solid hsl(${myTheme.colors.border})`,
+            }}
           >
-            <span className="text-gold-dim text-[10px] font-bold">{gameState.deck.length}</span>
+            <span className="text-[10px] font-bold opacity-60">{myTheme.emoji}</span>
           </motion.div>
-          <span className="text-[10px] text-muted-foreground">Deck</span>
+          <span className="text-[10px] text-muted-foreground">Deck ({gameState.deck.length})</span>
         </div>
 
         {/* Draw animation card flying to hand */}
@@ -465,9 +477,13 @@ export default function GamePage() {
               animate={{ opacity: 0, y: 120, x: 0, scale: 0.6 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35, ease: 'easeIn' }}
-              className="absolute z-10 playing-card-back flex items-center justify-center"
+              className="absolute z-10 w-[52px] h-[74px] rounded-lg card-shadow flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, hsl(${myTheme.colors.cardBack}), hsl(${myTheme.colors.cardBackEnd}))`,
+                border: `2px solid hsl(${myTheme.colors.border})`,
+              }}
             >
-              <span className="text-gold-dim opacity-30 text-sm">🦖</span>
+              <span className="opacity-40 text-sm">{myTheme.emoji}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -563,9 +579,10 @@ export default function GamePage() {
       <div className="p-3 pb-4 space-y-2 border-t border-border/50">
         <div className="flex items-center gap-2">
           <span className={cn(
-            "text-sm font-semibold",
-            isMyTurn ? "text-primary" : "text-muted-foreground"
+            "text-sm font-semibold flex items-center gap-1",
+            isMyTurn ? "text-foreground" : "text-muted-foreground"
           )}>
+            <span>{myTheme.emoji}</span>
             {me?.name} (You)
           </span>
           <div className="flex gap-1 ml-auto mr-2">
@@ -639,8 +656,11 @@ export default function GamePage() {
               animate={{ scale: 1, y: 0 }}
               className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
             >
-              <h2 className="text-3xl font-display text-primary gold-glow">
-                {gameState.winner === playerIndex ? '🦖 You Win! RAWR!' : '🦴 You Lose...'}
+              <h2
+                className="text-3xl font-display gold-glow"
+                style={{ color: gameState.winner === playerIndex ? `hsl(${myTheme.colors.primary})` : undefined }}
+              >
+                {gameState.winner === playerIndex ? `${myTheme.emoji} You Win! RAWR!` : '🦴 You Lose...'}
               </h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
               <div className="flex gap-3 justify-center pt-2">
