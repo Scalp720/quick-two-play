@@ -181,9 +181,37 @@ export default function GamePage() {
     });
   }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
 
+  const canPickDiscard = useCallback(() => {
+    if (!gameState || !myHand) return false;
+    const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+    if (!topCard) return false;
+    // Check if top discard can form a meld with any 2+ cards in hand
+    for (let i = 0; i < myHand.length; i++) {
+      for (let j = i + 1; j < myHand.length; j++) {
+        if (isValidMeld([topCard, myHand[i], myHand[j]])) return true;
+      }
+      // Check 3-card combos for runs
+      for (let j = i + 1; j < myHand.length; j++) {
+        for (let k = j + 1; k < myHand.length; k++) {
+          if (isValidMeld([topCard, myHand[i], myHand[j], myHand[k]])) return true;
+        }
+      }
+    }
+    // Check if it can lay off on any existing meld
+    const allMelds = gameState.players.flatMap(p => p.melds);
+    for (const meld of allMelds) {
+      if (canLayOff(topCard, meld)) return true;
+    }
+    return false;
+  }, [gameState, myHand]);
+
   const drawFromDiscard = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
     if (gameState.discardPile.length === 0) return;
+    if (!canPickDiscard()) {
+      toast.error('You can only pick from discard if it pairs with your cards!');
+      return;
+    }
 
     const newDiscard = [...gameState.discardPile];
     const card = newDiscard.pop()!;
@@ -559,13 +587,14 @@ export default function GamePage() {
         {/* Discard pile */}
         <div className="text-center space-y-1">
           <motion.div
-            onClick={isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? drawFromDiscard : undefined}
+            onClick={isMyTurn && gameState.turnPhase === 'draw' && topDiscard && canPickDiscard() ? drawFromDiscard : isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? () => toast.error('No matching cards in your hand for this discard!') : undefined}
             animate={drawAnim === 'discard' ? { scale: [1, 0.9, 1] } : {}}
             transition={{ duration: 0.3 }}
             className={cn(
               "w-[52px] h-[74px] rounded-lg border-2 border-dashed border-border flex items-center justify-center",
               topDiscard && "border-solid",
-              isMyTurn && gameState.turnPhase === 'draw' && topDiscard && "cursor-pointer hover:border-primary"
+              isMyTurn && gameState.turnPhase === 'draw' && topDiscard && canPickDiscard() && "cursor-pointer hover:border-primary",
+              isMyTurn && gameState.turnPhase === 'draw' && topDiscard && !canPickDiscard() && "cursor-not-allowed opacity-60"
             )}
           >
             <AnimatePresence mode="popLayout">
