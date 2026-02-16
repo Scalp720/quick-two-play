@@ -29,7 +29,7 @@ export function EmotePicker({ onSendEmote }: { onSendEmote: (emote: string) => v
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            className="absolute bottom-full mb-2 right-0 bg-card border border-border rounded-xl p-2 flex gap-1 flex-wrap w-[180px] z-50 shadow-lg"
+            className="absolute bottom-full mb-2 right-0 bg-card border border-border rounded-xl p-2 grid grid-cols-4 gap-2 w-[200px] z-50 shadow-lg"
           >
             {EMOTES.map((emote) => (
               <button
