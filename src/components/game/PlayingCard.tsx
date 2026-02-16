@@ -37,21 +37,21 @@ export function PlayingCard({ card, selected, onClick, faceDown, index = 0, smal
       whileHover={{ y: -8 }}
       onClick={onClick}
       className={cn(
-        "playing-card card-hover cursor-pointer select-none flex flex-col justify-between p-1.5 relative",
-        small && "!w-[48px] !h-[68px] !text-xs !p-1",
+        "playing-card card-hover cursor-pointer select-none flex flex-col justify-between p-1 relative overflow-hidden",
+        small && "!w-[40px] !h-[56px] !text-[9px] !p-0.5",
         selected && "ring-2 ring-primary"
       )}
     >
       <div className={cn("flex flex-col items-start leading-none", isRed ? "text-card-red" : "text-card-black")}>
-        <span className="font-bold">{card.rank}</span>
-        <span className="text-xs">{symbol}</span>
+        <span className="font-bold text-[11px] leading-none">{card.rank}</span>
+        <span className="text-[9px] leading-none">{symbol}</span>
       </div>
-      <div className={cn("text-2xl text-center", small && "!text-lg", isRed ? "text-card-red" : "text-card-black")}>
+      <div className={cn("text-lg text-center leading-none", small && "!text-sm", isRed ? "text-card-red" : "text-card-black")}>
         {symbol}
       </div>
       <div className={cn("flex flex-col items-end leading-none rotate-180", isRed ? "text-card-red" : "text-card-black")}>
-        <span className="font-bold">{card.rank}</span>
-        <span className="text-xs">{symbol}</span>
+        <span className="font-bold text-[11px] leading-none">{card.rank}</span>
+        <span className="text-[9px] leading-none">{symbol}</span>
       </div>
     </motion.div>
   );

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
   GameState, Card, initializeGame, generatePlayerId, isValidMeld,
-  canLayOff, calculateHandPoints, sortHand, getSuitSymbol, getSuitColor,
+  canLayOff, calculateHandPoints, sortHand, sortByRank, sortByGroups, getSuitSymbol, getSuitColor,
 } from '@/lib/tongits';
 import { PlayingCard, CardBack } from '@/components/game/PlayingCard';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
@@ -22,6 +22,7 @@ export default function GamePage() {
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [waiting, setWaiting] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
   const playerId = useRef(getOrCreatePlayerId());
 
   function getOrCreatePlayerId() {
@@ -381,7 +382,7 @@ export default function GamePage() {
     );
   }
 
-  const sortedHand = sortHand(myHand);
+  const sortedHand = sortMode === 'rank' ? sortByRank(myHand) : sortMode === 'group' ? sortByGroups(myHand) : sortHand(myHand);
   const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
 
   return (
@@ -430,7 +431,7 @@ export default function GamePage() {
               isMyTurn && gameState.turnPhase === 'draw' && "cursor-pointer animate-pulse-gold"
             )}
           >
-            <span className="text-gold-dim text-xs font-bold">{gameState.deck.length}</span>
+            <span className="text-gold-dim text-[10px] font-bold">{gameState.deck.length}</span>
           </div>
           <span className="text-[10px] text-muted-foreground">Deck</span>
         </div>
@@ -440,7 +441,7 @@ export default function GamePage() {
           <div
             onClick={isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? drawFromDiscard : undefined}
             className={cn(
-              "w-[60px] h-[84px] rounded-lg border-2 border-dashed border-border flex items-center justify-center",
+              "w-[52px] h-[74px] rounded-lg border-2 border-dashed border-border flex items-center justify-center",
               topDiscard && "border-solid",
               isMyTurn && gameState.turnPhase === 'draw' && topDiscard && "cursor-pointer hover:border-primary"
             )}
@@ -491,9 +492,9 @@ export default function GamePage() {
             size="sm"
             onClick={callDraw}
             variant="outline"
-            className="border-accent text-accent"
+            className="border-accent text-accent font-bold"
           >
-            Call Draw
+            ⚔️ Fight
           </Button>
         </div>
       )}
@@ -519,8 +520,34 @@ export default function GamePage() {
           )}>
             {me?.name} (You)
           </span>
-          <span className="text-xs text-muted-foreground ml-auto">
-            Points: {calculateHandPoints(myHand)}
+          <div className="flex gap-1 ml-auto mr-2">
+            <Button
+              size="sm"
+              variant={sortMode === 'suit' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setSortMode('suit')}
+            >
+              Suit
+            </Button>
+            <Button
+              size="sm"
+              variant={sortMode === 'rank' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setSortMode('rank')}
+            >
+              Rank
+            </Button>
+            <Button
+              size="sm"
+              variant={sortMode === 'group' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setSortMode('group')}
+            >
+              Group
+            </Button>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Pts: {calculateHandPoints(myHand)}
           </span>
         </div>
         <div className="flex gap-1 flex-wrap justify-center">

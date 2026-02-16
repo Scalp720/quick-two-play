@@ -170,3 +170,61 @@ export function sortHand(hand: Card[]): Card[] {
     return getRankIndex(a.rank) - getRankIndex(b.rank);
   });
 }
+
+export function sortByRank(hand: Card[]): Card[] {
+  return [...hand].sort((a, b) => {
+    const rankDiff = getRankIndex(a.rank) - getRankIndex(b.rank);
+    if (rankDiff !== 0) return rankDiff;
+    return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+  });
+}
+
+export function sortByGroups(hand: Card[]): Card[] {
+  // Group cards that form potential melds (same rank groups, then consecutive suit runs)
+  const sorted: Card[] = [];
+  const used = new Set<string>();
+
+  // First: find same-rank groups (pairs/sets)
+  const byRank = new Map<Rank, Card[]>();
+  for (const card of hand) {
+    if (!byRank.has(card.rank)) byRank.set(card.rank, []);
+    byRank.get(card.rank)!.push(card);
+  }
+  for (const [, cards] of byRank) {
+    if (cards.length >= 2) {
+      for (const c of cards) { sorted.push(c); used.add(c.id); }
+    }
+  }
+
+  // Then: find consecutive suit runs among remaining
+  const remaining = hand.filter(c => !used.has(c.id));
+  const bySuit = new Map<Suit, Card[]>();
+  for (const card of remaining) {
+    if (!bySuit.has(card.suit)) bySuit.set(card.suit, []);
+    bySuit.get(card.suit)!.push(card);
+  }
+  for (const [, cards] of bySuit) {
+    cards.sort((a, b) => getRankIndex(a.rank) - getRankIndex(b.rank));
+    // Find consecutive sequences
+    let run: Card[] = [cards[0]];
+    for (let i = 1; i < cards.length; i++) {
+      if (getRankIndex(cards[i].rank) === getRankIndex(cards[i-1].rank) + 1) {
+        run.push(cards[i]);
+      } else {
+        if (run.length >= 2) {
+          for (const c of run) { sorted.push(c); used.add(c.id); }
+        }
+        run = [cards[i]];
+      }
+    }
+    if (run.length >= 2) {
+      for (const c of run) { sorted.push(c); used.add(c.id); }
+    }
+  }
+
+  // Append remaining ungrouped cards
+  for (const card of hand) {
+    if (!used.has(card.id)) sorted.push(card);
+  }
+  return sorted;
+}
