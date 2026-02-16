@@ -24,6 +24,8 @@ export default function GamePage() {
   const [waiting, setWaiting] = useState(true);
   const [copied, setCopied] = useState(false);
   const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
+  const [drawAnim, setDrawAnim] = useState<'deck' | 'discard' | null>(null);
+  const [discardAnim, setDiscardAnim] = useState<string | null>(null);
   const playerId = useRef(getOrCreatePlayerId());
 
   function getOrCreatePlayerId() {
@@ -160,6 +162,8 @@ export default function GamePage() {
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
 
     playCardDraw();
+    setDrawAnim('deck');
+    setTimeout(() => setDrawAnim(null), 400);
     updateGame({
       ...gameState,
       deck: newDeck,
@@ -180,6 +184,8 @@ export default function GamePage() {
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
 
     playCardDraw();
+    setDrawAnim('discard');
+    setTimeout(() => setDrawAnim(null), 400);
     updateGame({
       ...gameState,
       discardPile: newDiscard,
@@ -306,15 +312,19 @@ export default function GamePage() {
     const nextTurn = opponentIndex;
 
     playCardDiscard();
-    updateGame({
-      ...gameState,
-      discardPile: [...gameState.discardPile, card],
-      players: newPlayers,
-      currentTurn: nextTurn,
-      turnPhase: 'draw',
-      lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
-    });
-    setSelectedCards([]);
+    setDiscardAnim(card.id);
+    setTimeout(() => {
+      setDiscardAnim(null);
+      updateGame({
+        ...gameState,
+        discardPile: [...gameState.discardPile, card],
+        players: newPlayers,
+        currentTurn: nextTurn,
+        turnPhase: 'draw',
+        lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
+      });
+      setSelectedCards([]);
+    }, 300);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me]);
 
   const callDraw = useCallback(() => {
@@ -429,37 +439,67 @@ export default function GamePage() {
       </div>
 
       {/* Center - deck & discard */}
-      <div className="flex-1 flex items-center justify-center gap-6 p-4">
+      <div className="flex-1 flex items-center justify-center gap-6 p-4 relative">
         {/* Deck */}
         <div className="text-center space-y-1">
-          <div
+          <motion.div
             onClick={isMyTurn && gameState.turnPhase === 'draw' ? drawFromDeck : undefined}
+            animate={drawAnim === 'deck' ? { scale: [1, 0.9, 1], rotate: [0, -3, 0] } : {}}
+            transition={{ duration: 0.3 }}
+            whileTap={isMyTurn && gameState.turnPhase === 'draw' ? { scale: 0.92 } : {}}
             className={cn(
               "playing-card-back flex items-center justify-center relative",
               isMyTurn && gameState.turnPhase === 'draw' && "cursor-pointer animate-pulse-gold"
             )}
           >
             <span className="text-gold-dim text-[10px] font-bold">{gameState.deck.length}</span>
-          </div>
+          </motion.div>
           <span className="text-[10px] text-muted-foreground">Deck</span>
         </div>
 
+        {/* Draw animation card flying to hand */}
+        <AnimatePresence>
+          {drawAnim && (
+            <motion.div
+              initial={{ opacity: 1, y: 0, x: drawAnim === 'deck' ? -40 : 40, scale: 1 }}
+              animate={{ opacity: 0, y: 120, x: 0, scale: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: 'easeIn' }}
+              className="absolute z-10 playing-card-back flex items-center justify-center"
+            >
+              <span className="text-gold-dim opacity-30 text-sm">🦖</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Discard pile */}
         <div className="text-center space-y-1">
-          <div
+          <motion.div
             onClick={isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? drawFromDiscard : undefined}
+            animate={drawAnim === 'discard' ? { scale: [1, 0.9, 1] } : {}}
+            transition={{ duration: 0.3 }}
             className={cn(
               "w-[52px] h-[74px] rounded-lg border-2 border-dashed border-border flex items-center justify-center",
               topDiscard && "border-solid",
               isMyTurn && gameState.turnPhase === 'draw' && topDiscard && "cursor-pointer hover:border-primary"
             )}
           >
-            {topDiscard ? (
-              <PlayingCard card={topDiscard} />
-            ) : (
-              <span className="text-[10px] text-muted-foreground">Empty</span>
-            )}
-          </div>
+            <AnimatePresence mode="popLayout">
+              {topDiscard ? (
+                <motion.div
+                  key={topDiscard.id}
+                  initial={{ scale: 0.5, opacity: 0, rotateY: 90 }}
+                  animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <PlayingCard card={topDiscard} />
+                </motion.div>
+              ) : (
+                <span className="text-[10px] text-muted-foreground">Empty</span>
+              )}
+            </AnimatePresence>
+          </motion.div>
           <span className="text-[10px] text-muted-foreground">Discard ({gameState.discardPile.length})</span>
         </div>
 
@@ -559,15 +599,29 @@ export default function GamePage() {
           </span>
         </div>
         <div className="flex gap-1 flex-wrap justify-center">
-          {sortedHand.map((card, i) => (
-            <PlayingCard
-              key={card.id}
-              card={card}
-              index={i}
-              selected={selectedCards.includes(card.id)}
-              onClick={() => toggleCardSelection(card.id)}
-            />
-          ))}
+          <AnimatePresence>
+            {sortedHand.map((card, i) => (
+              <motion.div
+                key={card.id}
+                layout
+                initial={{ y: 30, opacity: 0, scale: 0.8 }}
+                animate={
+                  discardAnim === card.id
+                    ? { y: -120, x: 0, opacity: 0, scale: 0.7, rotate: -10 }
+                    : { y: 0, opacity: 1, scale: 1, rotate: 0 }
+                }
+                exit={{ y: -80, opacity: 0, scale: 0.6 }}
+                transition={{ duration: 0.3, delay: discardAnim ? 0 : i * 0.02 }}
+              >
+                <PlayingCard
+                  card={card}
+                  index={0}
+                  selected={selectedCards.includes(card.id)}
+                  onClick={() => toggleCardSelection(card.id)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
 
