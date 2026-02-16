@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 interface PlayingCardProps {
   card: CardType;
   selected?: boolean;
+  highlighted?: boolean;
   onClick?: () => void;
   faceDown?: boolean;
   index?: number;
@@ -13,7 +14,7 @@ interface PlayingCardProps {
   theme?: DinoTheme;
 }
 
-export function PlayingCard({ card, selected, onClick, faceDown, index = 0, small, theme }: PlayingCardProps) {
+export function PlayingCard({ card, selected, highlighted, onClick, faceDown, index = 0, small, theme }: PlayingCardProps) {
   const color = getSuitColor(card.suit);
   const symbol = getSuitSymbol(card.suit);
   const isRed = color === 'red';
@@ -58,7 +59,8 @@ export function PlayingCard({ card, selected, onClick, faceDown, index = 0, smal
       className={cn(
         "playing-card card-hover cursor-pointer select-none flex flex-col justify-between p-1 relative overflow-hidden",
         small && "!w-[40px] !h-[56px] !text-[9px] !p-0.5",
-        selected && "ring-2 ring-primary"
+        selected && "ring-2 ring-primary",
+        highlighted && !selected && "ring-2 ring-accent animate-pulse shadow-[0_0_8px_hsl(var(--accent)/0.5)]"
       )}
     >
       <div className={cn("flex flex-col items-start leading-none", isRed ? "text-card-red" : "text-card-black")}>
