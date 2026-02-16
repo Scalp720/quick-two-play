@@ -54,7 +54,7 @@ export const DINO_THEMES: DinoTheme[] = [
   {
     id: 'stego',
     name: 'Stego',
-    emoji: '🐊',
+    emoji: '🦕',
     image: dinoStego,
     description: 'Tough & bold',
     colors: {
