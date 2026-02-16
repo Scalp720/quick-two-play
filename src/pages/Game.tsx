@@ -538,9 +538,8 @@ export default function GamePage() {
           <ArrowLeft className="w-4 h-4 mr-1" /> Leave
         </Button>
         <div className="text-xs text-muted-foreground font-mono">{roomCode}</div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Deck: {gameState.deck.length}</span>
-          <EmotePicker onSendEmote={sendEmote} />
+        <div className="text-xs text-muted-foreground">
+          Deck: {gameState.deck.length}
         </div>
       </div>
 
@@ -742,6 +741,7 @@ export default function GamePage() {
             <img src={myTheme.image} alt={myTheme.name} className="w-5 h-5 object-contain" />
             {me?.name} (You)
           </span>
+          <EmotePicker onSendEmote={sendEmote} />
           <div className="flex gap-1 ml-auto mr-2">
             <Button
               size="sm"
@@ -835,8 +835,54 @@ export default function GamePage() {
               animate={{ scale: 1, y: 0 }}
               className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
             >
-              {gameState.winner === playerIndex && (
-                <img src={myTheme.image} alt={myTheme.name} className="w-16 h-16 object-contain mx-auto" />
+              {gameState.winner === playerIndex ? (
+                <motion.div className="relative mx-auto w-24 h-24">
+                  <motion.img
+                    src={myTheme.image}
+                    alt={myTheme.name}
+                    className="w-24 h-24 object-contain"
+                    animate={{
+                      rotate: [0, -10, 10, -10, 10, 0],
+                      y: [0, -15, 0, -15, 0],
+                      scale: [1, 1.1, 1, 1.1, 1],
+                    }}
+                    transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 0.5 }}
+                  />
+                  <motion.div
+                    className="absolute -top-2 -right-2 text-2xl"
+                    animate={{ scale: [0, 1.3, 1], rotate: [0, 20, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
+                  >
+                    🎉
+                  </motion.div>
+                  <motion.div
+                    className="absolute -top-2 -left-2 text-2xl"
+                    animate={{ scale: [0, 1.3, 1], rotate: [0, -20, 0] }}
+                    transition={{ duration: 0.5, delay: 0.3, repeat: Infinity, repeatDelay: 1.5 }}
+                  >
+                    ⭐
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <motion.div className="relative mx-auto w-24 h-24">
+                  <motion.img
+                    src={myTheme.image}
+                    alt={myTheme.name}
+                    className="w-24 h-24 object-contain grayscale-[30%]"
+                    animate={{
+                      y: [0, 3, 0],
+                      rotate: [0, -2, 2, -2, 0],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                  <motion.div
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-2xl"
+                    animate={{ opacity: [0, 1, 0], y: [0, -10, -20] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    💧
+                  </motion.div>
+                </motion.div>
               )}
               <h2
                 className="text-3xl font-display gold-glow"
