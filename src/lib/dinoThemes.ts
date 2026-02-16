@@ -1,15 +1,20 @@
 // Dino Theme System - Each dino has a unique colorful identity
 
+import dinoRex from '@/assets/dino-rex.png';
+import dinoBronto from '@/assets/dino-bronto.png';
+import dinoStego from '@/assets/dino-stego.png';
+
 export interface DinoTheme {
   id: string;
   name: string;
   emoji: string;
+  image: string;
   description: string;
   colors: {
-    primary: string;      // HSL values (no hsl() wrapper)
+    primary: string;
     primaryGlow: string;
-    cardBack: string;     // gradient start
-    cardBackEnd: string;  // gradient end
+    cardBack: string;
+    cardBackEnd: string;
     accent: string;
     border: string;
   };
@@ -20,6 +25,7 @@ export const DINO_THEMES: DinoTheme[] = [
     id: 'rex',
     name: 'T-Rex',
     emoji: '🦖',
+    image: dinoRex,
     description: 'Fierce & fiery',
     colors: {
       primary: '0 80% 55%',
@@ -34,6 +40,7 @@ export const DINO_THEMES: DinoTheme[] = [
     id: 'bronto',
     name: 'Bronto',
     emoji: '🦕',
+    image: dinoBronto,
     description: 'Cool & calm',
     colors: {
       primary: '210 75% 55%',
@@ -48,7 +55,8 @@ export const DINO_THEMES: DinoTheme[] = [
     id: 'stego',
     name: 'Stego',
     emoji: '🐊',
-    description: 'Pretty in pink',
+    image: dinoStego,
+    description: 'Tough & bold',
     colors: {
       primary: '320 70% 60%',
       primaryGlow: '340 80% 65%',
@@ -58,56 +66,14 @@ export const DINO_THEMES: DinoTheme[] = [
       border: '320 50% 45%',
     },
   },
-  {
-    id: 'raptor',
-    name: 'Raptor',
-    emoji: '🦎',
-    description: 'Sneaky & electric',
-    colors: {
-      primary: '145 55% 45%',
-      primaryGlow: '160 65% 50%',
-      cardBack: '145 45% 35%',
-      cardBackEnd: '160 35% 22%',
-      accent: '80 70% 50%',
-      border: '145 40% 35%',
-    },
-  },
-  {
-    id: 'ptero',
-    name: 'Ptero',
-    emoji: '🦅',
-    description: 'Royal & majestic',
-    colors: {
-      primary: '270 65% 60%',
-      primaryGlow: '285 75% 65%',
-      cardBack: '270 55% 48%',
-      cardBackEnd: '255 45% 32%',
-      accent: '45 85% 55%',
-      border: '270 45% 42%',
-    },
-  },
-  {
-    id: 'trice',
-    name: 'Trice',
-    emoji: '🐂',
-    description: 'Bold & sunny',
-    colors: {
-      primary: '40 85% 55%',
-      primaryGlow: '50 90% 60%',
-      cardBack: '35 75% 45%',
-      cardBackEnd: '25 65% 30%',
-      accent: '20 90% 55%',
-      border: '40 60% 40%',
-    },
-  },
 ];
 
 export function getThemeById(id: string): DinoTheme {
-  return DINO_THEMES.find(t => t.id === id) || DINO_THEMES[3]; // default raptor (green, original)
+  return DINO_THEMES.find(t => t.id === id) || DINO_THEMES[0];
 }
 
 export function getSavedTheme(): string {
-  return localStorage.getItem('dino_theme') || 'raptor';
+  return localStorage.getItem('dino_theme') || 'rex';
 }
 
 export function saveTheme(id: string) {

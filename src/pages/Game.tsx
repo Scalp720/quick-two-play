@@ -445,7 +445,7 @@ export default function GamePage() {
             "text-sm font-semibold flex items-center gap-1",
             gameState.currentTurn === opponentIndex ? "text-foreground" : "text-muted-foreground"
           )}>
-            <span>{opponentTheme.emoji}</span>
+            <img src={opponentTheme.image} alt={opponentTheme.name} className="w-5 h-5 object-contain" />
             {opponent?.name || 'Opponent'}
           </span>
           {gameState.currentTurn === opponentIndex && (
@@ -482,7 +482,7 @@ export default function GamePage() {
               border: `2px solid hsl(${myTheme.colors.border})`,
             }}
           >
-            <span className="text-[10px] font-bold opacity-60">{myTheme.emoji}</span>
+            <img src={myTheme.image} alt={myTheme.name} className="w-6 h-6 object-contain opacity-70" />
           </motion.div>
           <span className="text-[10px] text-muted-foreground">Deck ({gameState.deck.length})</span>
         </div>
@@ -501,7 +501,7 @@ export default function GamePage() {
                 border: `2px solid hsl(${myTheme.colors.border})`,
               }}
             >
-              <span className="opacity-40 text-sm">{myTheme.emoji}</span>
+              <img src={myTheme.image} alt={myTheme.name} className="w-5 h-5 object-contain opacity-50" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -600,7 +600,7 @@ export default function GamePage() {
             "text-sm font-semibold flex items-center gap-1",
             isMyTurn ? "text-foreground" : "text-muted-foreground"
           )}>
-            <span>{myTheme.emoji}</span>
+            <img src={myTheme.image} alt={myTheme.name} className="w-5 h-5 object-contain" />
             {me?.name} (You)
           </span>
           <div className="flex gap-1 ml-auto mr-2">
@@ -674,11 +674,14 @@ export default function GamePage() {
               animate={{ scale: 1, y: 0 }}
               className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
             >
+              {gameState.winner === playerIndex && (
+                <img src={myTheme.image} alt={myTheme.name} className="w-16 h-16 object-contain mx-auto" />
+              )}
               <h2
                 className="text-3xl font-display gold-glow"
                 style={{ color: gameState.winner === playerIndex ? `hsl(${myTheme.colors.primary})` : undefined }}
               >
-                {gameState.winner === playerIndex ? `${myTheme.emoji} You Win! RAWR!` : '🦴 You Lose...'}
+                {gameState.winner === playerIndex ? 'You Win! RAWR!' : '🦴 You Lose...'}
               </h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
               <div className="flex gap-3 justify-center pt-2">

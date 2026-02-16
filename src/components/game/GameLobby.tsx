@@ -28,7 +28,7 @@ function ThemeCard({ theme, selected, onClick }: { theme: DinoTheme; selected: b
           : undefined,
       }}
     >
-      <span className="text-2xl">{theme.emoji}</span>
+      <img src={theme.image} alt={theme.name} className="w-10 h-10 object-contain" />
       <span className="text-[10px] font-bold" style={{ color: `hsl(${theme.colors.primary})` }}>
         {theme.name}
       </span>
@@ -115,14 +115,15 @@ export function GameLobby() {
         className="w-full max-w-md space-y-8"
       >
         <div className="text-center space-y-3">
-          <motion.h1
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-            className="text-5xl font-display font-black gold-glow"
-            style={{ color: `hsl(${currentTheme.colors.primary})` }}
-          >
-            {currentTheme.emoji} Dino Its
-          </motion.h1>
+          <motion.div initial={{ y: -20 }} animate={{ y: 0 }} className="flex flex-col items-center gap-2">
+            <img src={currentTheme.image} alt={currentTheme.name} className="w-20 h-20 object-contain" />
+            <h1
+              className="text-5xl font-display font-black gold-glow"
+              style={{ color: `hsl(${currentTheme.colors.primary})` }}
+            >
+              Dino Its
+            </h1>
+          </motion.div>
           <p className="text-muted-foreground">
             Play the prehistoric card game with a friend online! RAWR! 🦖
           </p>
