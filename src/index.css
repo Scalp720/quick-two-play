@@ -2,78 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Nunito:wght@400;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 152 45% 12%;
-    --foreground: 45 30% 90%;
+    --background: 30 35% 18%;
+    --foreground: 45 40% 92%;
 
-    --card: 152 40% 16%;
-    --card-foreground: 45 30% 90%;
+    --card: 30 30% 22%;
+    --card-foreground: 45 40% 92%;
 
-    --popover: 152 40% 14%;
-    --popover-foreground: 45 30% 90%;
+    --popover: 30 30% 20%;
+    --popover-foreground: 45 40% 92%;
 
-    --primary: 43 80% 55%;
-    --primary-foreground: 152 45% 10%;
+    --primary: 145 55% 45%;
+    --primary-foreground: 30 35% 10%;
 
-    --secondary: 152 30% 22%;
-    --secondary-foreground: 45 30% 90%;
+    --secondary: 30 25% 28%;
+    --secondary-foreground: 45 40% 92%;
 
-    --muted: 152 25% 20%;
-    --muted-foreground: 152 15% 55%;
+    --muted: 30 20% 25%;
+    --muted-foreground: 30 15% 55%;
 
-    --accent: 0 70% 55%;
+    --accent: 25 85% 55%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 152 25% 25%;
-    --input: 152 25% 25%;
-    --ring: 43 80% 55%;
+    --border: 30 20% 30%;
+    --input: 30 20% 30%;
+    --ring: 145 55% 45%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 152 40% 10%;
-    --sidebar-foreground: 45 30% 90%;
-    --sidebar-primary: 43 80% 55%;
-    --sidebar-primary-foreground: 152 45% 10%;
-    --sidebar-accent: 152 30% 18%;
-    --sidebar-accent-foreground: 45 30% 90%;
-    --sidebar-border: 152 25% 25%;
-    --sidebar-ring: 43 80% 55%;
+    --sidebar-background: 30 30% 14%;
+    --sidebar-foreground: 45 40% 92%;
+    --sidebar-primary: 145 55% 45%;
+    --sidebar-primary-foreground: 30 35% 10%;
+    --sidebar-accent: 30 25% 24%;
+    --sidebar-accent-foreground: 45 40% 92%;
+    --sidebar-border: 30 20% 30%;
+    --sidebar-ring: 145 55% 45%;
 
-    --felt: 152 50% 18%;
-    --felt-dark: 152 50% 12%;
-    --gold: 43 80% 55%;
-    --gold-dim: 43 50% 35%;
-    --card-white: 0 0% 97%;
+    --felt: 30 40% 22%;
+    --felt-dark: 30 40% 14%;
+    --gold: 25 85% 55%;
+    --gold-dim: 25 50% 35%;
+    --card-white: 40 30% 95%;
     --card-red: 0 75% 50%;
-    --card-black: 0 0% 15%;
+    --card-black: 30 20% 18%;
   }
 
   .dark {
-    --background: 152 45% 8%;
-    --foreground: 45 30% 90%;
-    --card: 152 40% 12%;
-    --card-foreground: 45 30% 90%;
-    --popover: 152 40% 10%;
-    --popover-foreground: 45 30% 90%;
-    --primary: 43 80% 55%;
-    --primary-foreground: 152 45% 10%;
-    --secondary: 152 30% 18%;
-    --secondary-foreground: 45 30% 90%;
-    --muted: 152 25% 16%;
-    --muted-foreground: 152 15% 50%;
-    --accent: 0 70% 55%;
+    --background: 30 35% 12%;
+    --foreground: 45 40% 92%;
+    --card: 30 30% 16%;
+    --card-foreground: 45 40% 92%;
+    --popover: 30 30% 14%;
+    --popover-foreground: 45 40% 92%;
+    --primary: 145 55% 45%;
+    --primary-foreground: 30 35% 10%;
+    --secondary: 30 25% 22%;
+    --secondary-foreground: 45 40% 92%;
+    --muted: 30 20% 20%;
+    --muted-foreground: 30 15% 50%;
+    --accent: 25 85% 55%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 152 25% 20%;
-    --input: 152 25% 20%;
-    --ring: 43 80% 55%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 20% 25%;
+    --input: 30 20% 25%;
+    --ring: 145 55% 45%;
   }
 }
 
@@ -84,22 +84,23 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Nunito', sans-serif;
   }
 
   h1, h2, h3 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Bungee', cursive;
   }
 }
 
 @layer components {
   .felt-texture {
     background: 
-      radial-gradient(ellipse at 50% 0%, hsl(var(--felt)) 0%, hsl(var(--felt-dark)) 100%);
+      radial-gradient(ellipse at 50% 0%, hsl(var(--felt)) 0%, hsl(var(--felt-dark)) 100%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   .gold-glow {
-    text-shadow: 0 0 20px hsl(var(--gold) / 0.4);
+    text-shadow: 0 0 20px hsl(var(--gold) / 0.5), 0 0 40px hsl(var(--gold) / 0.2);
   }
 
   .card-shadow {
@@ -130,7 +131,7 @@
     @apply rounded-lg card-shadow;
     width: 60px;
     height: 84px;
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(0 60% 35%) 100%);
+    background: linear-gradient(135deg, hsl(145 45% 30%) 0%, hsl(145 35% 20%) 100%);
     border: 2px solid hsl(var(--gold-dim));
   }
 }

@@ -24,7 +24,7 @@ export function PlayingCard({ card, selected, onClick, faceDown, index = 0, smal
         transition={{ delay: index * 0.05, duration: 0.3 }}
         className="playing-card-back flex items-center justify-center cursor-default"
       >
-        <div className="text-gold-dim text-lg font-bold opacity-40">🂠</div>
+        <div className="text-gold-dim text-lg font-bold opacity-40">🦕</div>
       </motion.div>
     );
   }
@@ -65,7 +65,7 @@ export function CardBack({ index = 0 }: { index?: number }) {
       transition={{ delay: index * 0.02 }}
       className="playing-card-back flex items-center justify-center"
     >
-      <div className="text-gold-dim opacity-30 text-sm">✦</div>
+      <div className="text-gold-dim opacity-30 text-sm">🦖</div>
     </motion.div>
   );
 }

@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['Bungee', 'cursive'],
+        body: ['Nunito', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -88,8 +88,8 @@ export default {
           "100%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
         },
         "pulse-gold": {
-          "0%, 100%": { boxShadow: "0 0 0 0 hsl(43 80% 55% / 0.4)" },
-          "50%": { boxShadow: "0 0 0 10px hsl(43 80% 55% / 0)" },
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(145 55% 45% / 0.4)" },
+          "50%": { boxShadow: "0 0 0 10px hsl(145 55% 45% / 0)" },
         },
       },
       animation: {
