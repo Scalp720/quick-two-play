@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Copy, ArrowLeft } from 'lucide-react';
+import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 
 export default function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -158,6 +159,7 @@ export default function GamePage() {
     const newPlayers = [...gameState.players];
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
 
+    playCardDraw();
     updateGame({
       ...gameState,
       deck: newDeck,
@@ -177,6 +179,7 @@ export default function GamePage() {
     const newPlayers = [...gameState.players];
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
 
+    playCardDraw();
     updateGame({
       ...gameState,
       discardPile: newDiscard,
@@ -187,6 +190,7 @@ export default function GamePage() {
   }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
 
   const toggleCardSelection = useCallback((cardId: string) => {
+    playClick();
     setSelectedCards(prev =>
       prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]
     );
@@ -211,6 +215,7 @@ export default function GamePage() {
 
     // Check for Tong Its (empty hand)
     if (newHand.length === 0) {
+      playWin();
       updateGame({
         ...gameState,
         players: newPlayers,
@@ -220,6 +225,7 @@ export default function GamePage() {
         lastAction: `${me?.name} called Tong Its!`,
       });
     } else {
+      playMeld();
       updateGame({
         ...gameState,
         players: newPlayers,
@@ -299,6 +305,7 @@ export default function GamePage() {
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], hand: newHand };
     const nextTurn = opponentIndex;
 
+    playCardDiscard();
     updateGame({
       ...gameState,
       discardPile: [...gameState.discardPile, card],
@@ -322,11 +329,12 @@ export default function GamePage() {
     const opponentPoints = calculateHandPoints(opponent!.hand);
     const winner = myPoints <= opponentPoints ? playerIndex : opponentIndex;
 
+    playFight();
     updateGame({
       ...gameState,
       phase: 'finished',
       winner,
-      winMethod: `Draw called! ${gameState.players[winner].name} wins with ${Math.min(myPoints, opponentPoints)} vs ${Math.max(myPoints, opponentPoints)} points!`,
+      winMethod: `Fight! ${gameState.players[winner].name} wins with ${Math.min(myPoints, opponentPoints)} vs ${Math.max(myPoints, opponentPoints)} points!`,
     });
   }, [gameState, isMyTurn, myHand, playerIndex, opponentIndex, updateGame, me, opponent]);
 
