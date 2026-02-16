@@ -30,7 +30,7 @@ export function PlayingCard({ card, selected, onClick, faceDown, index = 0, smal
           border: `2px solid hsl(${theme.colors.border})`,
         }}
       >
-        <span className="text-lg font-bold opacity-60">{theme.emoji}</span>
+        <img src={theme.image} alt={theme.name} className="w-7 h-7 object-contain opacity-70" />
       </motion.div>
     );
   }
@@ -89,7 +89,7 @@ export function CardBack({ index = 0, theme }: { index?: number; theme?: DinoThe
           border: `2px solid hsl(${theme.colors.border})`,
         }}
       >
-        <span className="opacity-40 text-sm">{theme.emoji}</span>
+        <img src={theme.image} alt={theme.name} className="w-6 h-6 object-contain opacity-50" />
       </motion.div>
     );
   }
