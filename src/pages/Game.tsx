@@ -319,14 +319,29 @@ export default function GamePage() {
     setDiscardAnim(card.id);
     setTimeout(() => {
       setDiscardAnim(null);
-      updateGame({
-        ...gameState,
-        discardPile: [...gameState.discardPile, card],
-        players: newPlayers,
-        currentTurn: nextTurn,
-        turnPhase: 'draw',
-        lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
-      });
+
+      // Check if hand is empty after discard = Tong Its win!
+      if (newHand.length === 0) {
+        playWin();
+        updateGame({
+          ...gameState,
+          discardPile: [...gameState.discardPile, card],
+          players: newPlayers,
+          phase: 'finished',
+          winner: playerIndex,
+          winMethod: `Tong Its! ${me?.name} emptied their hand!`,
+          lastAction: `${me?.name} called Tong Its!`,
+        });
+      } else {
+        updateGame({
+          ...gameState,
+          discardPile: [...gameState.discardPile, card],
+          players: newPlayers,
+          currentTurn: nextTurn,
+          turnPhase: 'draw',
+          lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
+        });
+      }
       setSelectedCards([]);
     }, 300);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me]);
