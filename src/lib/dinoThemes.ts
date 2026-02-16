@@ -61,7 +61,7 @@ export const DINO_THEMES: DinoTheme[] = [
   {
     id: 'raptor',
     name: 'Raptor',
-    emoji: '🐉',
+    emoji: '🦎',
     description: 'Sneaky & electric',
     colors: {
       primary: '145 55% 45%',
