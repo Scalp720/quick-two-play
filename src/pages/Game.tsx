@@ -338,18 +338,21 @@ export default function GamePage() {
     setSelectedCards([]);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
 
-  const canSapawAny = useCallback(() => {
-    if (!gameState) return false;
+  // Check if a specific card can sapaw onto any meld, returns matching meld IDs
+  const getMatchingSapawMelds = useCallback((cardId: string): string[] => {
+    if (!gameState) return [];
+    const card = myHand.find(c => c.id === cardId);
+    if (!card) return [];
     const allMelds = gameState.players.flatMap(p => p.melds);
-    if (allMelds.length === 0) return false;
-    // Check if any card in hand can be laid off on any meld
-    for (const card of myHand) {
-      for (const meld of allMelds) {
-        if (canLayOff(card, meld)) return true;
-      }
-    }
-    return false;
+    return allMelds.filter(meld => canLayOff(card, meld)).map(m => m.id);
   }, [gameState, myHand]);
+
+  // Get highlighted meld IDs based on currently selected card(s)
+  const highlightedMeldIds = selectedCards.length === 1
+    ? getMatchingSapawMelds(selectedCards[0])
+    : [];
+
+  const canSelectedCardSapaw = selectedCards.length === 1 && highlightedMeldIds.length > 0;
 
   const discardCard = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
@@ -358,9 +361,9 @@ export default function GamePage() {
       return;
     }
 
-    // Prevent discard if sapaw is available
-    if (canSapawAny()) {
-      toast.error('You must sapaw first before discarding! You have cards that fit on existing melds.');
+    // Prevent discard if the selected card can be sapaw'd
+    if (canSelectedCardSapaw) {
+      toast.error('This card can be sapaw\'d! Choose a different card or sapaw it first.');
       return;
     }
 
@@ -401,7 +404,7 @@ export default function GamePage() {
       }
       setSelectedCards([]);
     }, 300);
-  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSapawAny]);
+  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSelectedCardSapaw]);
 
   const callDraw = useCallback(() => {
     if (!gameState || !isMyTurn) return;
@@ -586,7 +589,7 @@ export default function GamePage() {
         <div className="flex gap-1 flex-wrap">
           {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
-        <MeldDisplay melds={opponent?.melds || []} label="Opponent's melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} />
+        <MeldDisplay melds={opponent?.melds || []} label="Opponent's melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
       </div>
 
       {/* Center - deck & discard */}
@@ -673,7 +676,7 @@ export default function GamePage() {
 
       {/* My melds */}
       <div className="px-3">
-        <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} />
+        <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
       </div>
 
       {/* Action buttons */}
