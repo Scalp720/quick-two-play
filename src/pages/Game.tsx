@@ -338,10 +338,29 @@ export default function GamePage() {
     setSelectedCards([]);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
 
+  const canSapawAny = useCallback(() => {
+    if (!gameState) return false;
+    const allMelds = gameState.players.flatMap(p => p.melds);
+    if (allMelds.length === 0) return false;
+    // Check if any card in hand can be laid off on any meld
+    for (const card of myHand) {
+      for (const meld of allMelds) {
+        if (canLayOff(card, meld)) return true;
+      }
+    }
+    return false;
+  }, [gameState, myHand]);
+
   const discardCard = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
     if (selectedCards.length !== 1) {
       toast.error('Select exactly 1 card to discard');
+      return;
+    }
+
+    // Prevent discard if sapaw is available
+    if (canSapawAny()) {
+      toast.error('You must sapaw first before discarding! You have cards that fit on existing melds.');
       return;
     }
 
@@ -382,7 +401,7 @@ export default function GamePage() {
       }
       setSelectedCards([]);
     }, 300);
-  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me]);
+  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSapawAny]);
 
   const callDraw = useCallback(() => {
     if (!gameState || !isMyTurn) return;
