@@ -31,6 +31,9 @@ export default function GamePage() {
   const [drawAnim, setDrawAnim] = useState<'deck' | 'discard' | null>(null);
   const [discardAnim, setDiscardAnim] = useState<string | null>(null);
   const [activeEmote, setActiveEmote] = useState<{ emote: string; from: number } | null>(null);
+  const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+  const [disconnectTimer, setDisconnectTimer] = useState(60);
+  const disconnectTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playerId = useRef(getOrCreatePlayerId());
 
   function getOrCreatePlayerId() {
@@ -110,7 +113,7 @@ export default function GamePage() {
         return;
       }
 
-      // Subscribe to changes
+      // Subscribe to game state changes
       const channel = supabase
         .channel(`room-${room.id}`)
         .on(
@@ -126,8 +129,27 @@ export default function GamePage() {
         )
         .subscribe();
 
+      // Presence channel for disconnect detection
+      const presenceChannel = supabase
+        .channel(`presence-${room.id}`)
+        .on('presence', { event: 'sync' }, () => {
+          const state = presenceChannel.presenceState();
+          const presentPlayers = Object.values(state).flat() as any[];
+          const opponentPresent = presentPlayers.some(
+            (p: any) => p.playerId !== playerId.current
+          );
+          // Only track opponent disconnection after both players have joined
+          setOpponentDisconnected(presentPlayers.length > 0 && !opponentPresent && presentPlayers.some((p: any) => p.playerId === playerId.current));
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({ playerId: playerId.current });
+          }
+        });
+
       return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(presenceChannel);
       };
     };
 
@@ -149,6 +171,39 @@ export default function GamePage() {
   const opponent = gameState?.players[opponentIndex];
   const me = gameState?.players[playerIndex];
   const opponentTheme = getThemeById((opponent as any)?.theme || 'raptor');
+
+  // Disconnect timer - countdown when opponent leaves
+  useEffect(() => {
+    if (opponentDisconnected && !waiting && gameState?.phase === 'playing') {
+      setDisconnectTimer(60);
+      disconnectTimerRef.current = setInterval(() => {
+        setDisconnectTimer(prev => {
+          if (prev <= 1) {
+            if (disconnectTimerRef.current) clearInterval(disconnectTimerRef.current);
+            if (gameState && roomId) {
+              const winState: GameState = {
+                ...gameState,
+                phase: 'finished',
+                winner: playerIndex,
+                winMethod: `${opponent?.name} disconnected! ${me?.name} wins by default.`,
+              };
+              updateGame(winState);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (disconnectTimerRef.current) {
+        clearInterval(disconnectTimerRef.current);
+        disconnectTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (disconnectTimerRef.current) clearInterval(disconnectTimerRef.current);
+    };
+  }, [opponentDisconnected, waiting, gameState?.phase]);
 
   const drawFromDeck = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
@@ -843,6 +898,43 @@ export default function GamePage() {
           onComplete={handleCoinFlipComplete}
         />
       )}
+
+      {/* Opponent disconnected overlay */}
+      <AnimatePresence>
+        {opponentDisconnected && gameState.phase === 'playing' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
+            >
+              <motion.div
+                animate={{ rotate: [0, -10, 10, -10, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="text-5xl"
+              >
+                🦕
+              </motion.div>
+              <h2 className="text-2xl font-display text-primary">Opponent Disconnected</h2>
+              <p className="text-sm text-muted-foreground">
+                {opponent?.name} left the game. Waiting for them to reconnect...
+              </p>
+              <div className="text-3xl font-mono font-bold text-accent">{disconnectTimer}s</div>
+              <p className="text-xs text-muted-foreground">
+                You'll win automatically if they don't return in time.
+              </p>
+              <Button variant="outline" onClick={() => navigate('/')} className="border-primary text-primary">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Leave Game
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Game over overlay */}
       <AnimatePresence>
