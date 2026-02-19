@@ -619,6 +619,14 @@ export default function GamePage() {
               </motion.span>
             ))}
           </motion.div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancel
+          </Button>
         </motion.div>
       </div>
     );
