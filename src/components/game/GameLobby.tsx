@@ -74,6 +74,9 @@ export function GameLobby() {
     }
     setLoading(true);
     try {
+      // Show spinning dino for 3 seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       const roomCode = generateRoomCode();
       const playerId = getOrCreatePlayerId();
       localStorage.setItem('tongits_player_name', playerName.trim());
