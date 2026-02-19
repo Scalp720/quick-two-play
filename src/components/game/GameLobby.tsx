@@ -5,9 +5,10 @@ import { generateRoomCode, generatePlayerId } from '@/lib/tongits';
 import { DINO_THEMES, getSavedTheme, saveTheme, DinoTheme } from '@/lib/dinoThemes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { FloatingDinos, Sparkles, HeartBubbles } from './FloatingDinos';
 
 function ThemeCard({ theme, selected, onClick }: { theme: DinoTheme; selected: boolean; onClick: () => void }) {
   return (
@@ -108,25 +109,50 @@ export function GameLobby() {
   };
 
   return (
-    <div className="min-h-screen felt-texture flex items-center justify-center p-4">
+    <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
+      <FloatingDinos count={15} />
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-md space-y-8"
+        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+        className="w-full max-w-md space-y-8 relative z-10"
       >
-        <div className="text-center space-y-3">
-          <motion.div initial={{ y: -20 }} animate={{ y: 0 }} className="flex flex-col items-center gap-2">
-            <img src={currentTheme.image} alt={currentTheme.name} className="w-20 h-20 object-contain" />
-            <h1
+        <div className="text-center space-y-3 relative">
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 150, damping: 12 }}
+            className="flex flex-col items-center gap-2 relative"
+          >
+            <motion.img
+              src={currentTheme.image}
+              alt={currentTheme.name}
+              className="w-24 h-24 object-contain drop-shadow-lg"
+              animate={{
+                y: [0, -8, 0],
+                rotate: [0, 3, -3, 0],
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <Sparkles color={currentTheme.colors.primary} count={8} />
+            <motion.h1
               className="text-5xl font-display font-black gold-glow"
               style={{ color: `hsl(${currentTheme.colors.primary})` }}
+              animate={{ scale: [1, 1.02, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
               Dino Its
-            </h1>
+            </motion.h1>
           </motion.div>
-          <p className="text-muted-foreground">
+          <motion.p
+            className="text-muted-foreground"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             Play the prehistoric card game with a friend online! RAWR! 🦖
-          </p>
+          </motion.p>
+          <HeartBubbles />
         </div>
 
         <div className="bg-card/80 backdrop-blur rounded-xl p-6 space-y-5 border border-border">
@@ -206,9 +232,36 @@ export function GameLobby() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
+        <motion.p
+          className="text-center text-xs text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
           Create a den and share the code with your dino buddy to start playing! 🌋
-        </p>
+        </motion.p>
+
+        {/* Stomping dinos at the bottom */}
+        <div className="flex justify-center gap-6 pt-2">
+          {DINO_THEMES.slice(0, 3).map((t, i) => (
+            <motion.img
+              key={t.id}
+              src={t.image}
+              alt={t.name}
+              className="w-8 h-8 object-contain opacity-30"
+              animate={{
+                y: [0, -6, 0],
+                rotate: [0, i % 2 === 0 ? 5 : -5, 0],
+              }}
+              transition={{
+                duration: 1.2,
+                repeat: Infinity,
+                delay: i * 0.4,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </div>
       </motion.div>
     </div>
   );

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
+import { FloatingDinos, Sparkles } from '@/components/game/FloatingDinos';
 import dinoDance from '@/assets/dino-dance.gif';
 
 export default function GamePage() {
@@ -576,22 +577,48 @@ export default function GamePage() {
   // Waiting for opponent
   if (waiting) {
     return (
-      <div className="min-h-screen felt-texture flex items-center justify-center p-4">
+      <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
+        <FloatingDinos count={10} />
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center space-y-6 max-w-sm"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="text-center space-y-6 max-w-sm relative z-10"
         >
-          <h2 className="text-3xl font-display text-primary gold-glow">🦕 Waiting for Dino Buddy</h2>
+          <motion.h2
+            className="text-3xl font-display text-primary gold-glow"
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            🦕 Waiting for Dino Buddy
+          </motion.h2>
           <p className="text-muted-foreground">Share this link with your dino friend:</p>
-          <div className="bg-card/80 rounded-xl p-4 border border-border">
+          <motion.div
+            className="bg-card/80 rounded-xl p-4 border border-border relative overflow-hidden"
+            animate={{ boxShadow: ['0 0 0 0 hsl(45 90% 50% / 0)', '0 0 20px 4px hsl(45 90% 50% / 0.15)', '0 0 0 0 hsl(45 90% 50% / 0)'] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Sparkles count={5} />
             <p className="text-2xl font-mono font-bold tracking-[0.3em] text-primary mb-3">{roomCode}</p>
             <Button onClick={copyRoomCode} variant="outline" className="border-primary text-primary">
               <Copy className="w-4 h-4 mr-2" />
               {copied ? 'Copied!' : 'Copy Invite Link'}
             </Button>
-          </div>
-          <div className="animate-pulse-gold w-3 h-3 rounded-full bg-primary mx-auto" />
+          </motion.div>
+          <motion.div
+            className="flex justify-center gap-4"
+          >
+            {['🦖', '🦕', '🌋'].map((emoji, i) => (
+              <motion.span
+                key={i}
+                className="text-2xl"
+                animate={{ y: [0, -12, 0], rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
+              >
+                {emoji}
+              </motion.span>
+            ))}
+          </motion.div>
         </motion.div>
       </div>
     );
@@ -946,10 +973,12 @@ export default function GamePage() {
             className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 30 }}
+              initial={{ scale: 0.5, y: 50 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full"
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full relative overflow-hidden"
             >
+              <Sparkles color={gameState.winner === playerIndex ? myTheme.colors.primary : '0 0% 50%'} count={12} />
               {gameState.winner === playerIndex ? (
                 <motion.div className="relative mx-auto w-32 h-32">
                   <img
@@ -957,20 +986,29 @@ export default function GamePage() {
                     alt="Dancing dino"
                     className="w-32 h-32 object-contain"
                   />
-                  <motion.div
-                    className="absolute -top-2 -right-2 text-2xl"
-                    animate={{ scale: [0, 1.3, 1], rotate: [0, 20, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
-                  >
-                    🎉
-                  </motion.div>
-                  <motion.div
-                    className="absolute -top-2 -left-2 text-2xl"
-                    animate={{ scale: [0, 1.3, 1], rotate: [0, -20, 0] }}
-                    transition={{ duration: 0.5, delay: 0.3, repeat: Infinity, repeatDelay: 1.5 }}
-                  >
-                    ⭐
-                  </motion.div>
+                  {/* Confetti burst */}
+                  {['🎉', '⭐', '🌟', '🎊', '💫', '✨'].map((emoji, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-2xl"
+                      style={{ left: '50%', top: '50%' }}
+                      animate={{
+                        x: [0, (Math.random() - 0.5) * 120],
+                        y: [0, (Math.random() - 0.5) * 120],
+                        opacity: [0, 1, 0],
+                        scale: [0, 1.5, 0],
+                        rotate: [0, 360],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.3,
+                        ease: 'easeOut',
+                      }}
+                    >
+                      {emoji}
+                    </motion.div>
+                  ))}
                 </motion.div>
               ) : (
                 <motion.div className="relative mx-auto w-24 h-24">
@@ -984,21 +1022,28 @@ export default function GamePage() {
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
-                  <motion.div
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-2xl"
-                    animate={{ opacity: [0, 1, 0], y: [0, -10, -20] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    💧
-                  </motion.div>
+                  {/* Sad rain */}
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-lg"
+                      style={{ left: `${20 + i * 20}%`, top: '-10px' }}
+                      animate={{ y: [0, 60], opacity: [0.8, 0] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
+                    >
+                      💧
+                    </motion.div>
+                  ))}
                 </motion.div>
               )}
-              <h2
+              <motion.h2
                 className="text-3xl font-display gold-glow"
                 style={{ color: gameState.winner === playerIndex ? `hsl(${myTheme.colors.primary})` : undefined }}
+                animate={gameState.winner === playerIndex ? { scale: [1, 1.05, 1] } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
               >
                 {gameState.winner === playerIndex ? 'You Win! RAWR!' : '🦴 You Lose...'}
-              </h2>
+              </motion.h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
               <div className="flex flex-col gap-3 items-center pt-2">
                 {gameState.rematchRequested === playerIndex ? (
@@ -1009,10 +1054,12 @@ export default function GamePage() {
                     Accept Rematch!
                   </Button>
                 ) : (
-                  <Button onClick={requestRematch} className="bg-primary text-primary-foreground">
-                    <img src={myTheme.image} alt="" className="w-5 h-5 object-contain mr-1" />
-                    Play Again
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button onClick={requestRematch} className="bg-primary text-primary-foreground">
+                      <img src={myTheme.image} alt="" className="w-5 h-5 object-contain mr-1" />
+                      Play Again
+                    </Button>
+                  </motion.div>
                 )}
                 <Button variant="outline" onClick={() => navigate('/')}>
                   Leave
