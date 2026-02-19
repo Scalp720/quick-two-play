@@ -626,8 +626,85 @@ export default function GamePage() {
 
   if (!gameState || playerIndex < 0) {
     return (
-      <div className="min-h-screen felt-texture flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen felt-texture flex items-center justify-center relative overflow-hidden">
+        <FloatingDinos count={8} />
+        <div className="text-center space-y-6 z-10">
+          {/* Walking dino animation */}
+          <motion.div
+            className="relative mx-auto"
+            style={{ width: 120, height: 100 }}
+          >
+            {/* Ground line */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 h-[2px] rounded-full bg-primary/30" />
+            {/* Footprints trailing behind */}
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className="absolute bottom-1 text-xs"
+                style={{ left: `${10 + i * 25}%` }}
+                animate={{ opacity: [0.5, 0.15, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+              >
+                🦶
+              </motion.div>
+            ))}
+            {/* Walking dino */}
+            <motion.div
+              className="absolute bottom-1"
+              animate={{
+                x: [-30, 30, -30],
+                scaleX: [-1, -1, -1, 1, 1, 1],
+              }}
+              transition={{
+                x: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                scaleX: { duration: 3, repeat: Infinity, ease: 'linear' },
+              }}
+            >
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 0.4, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <img src={myTheme.image} alt="Walking dino" className="w-14 h-14 object-contain drop-shadow-lg" />
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
+          {/* Loading text */}
+          <motion.div className="space-y-2">
+            <motion.h2
+              className="text-2xl font-display text-primary gold-glow"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              Loading Dino World
+            </motion.h2>
+            <div className="flex items-center justify-center gap-1">
+              {['🥚', '🦴', '🌿'].map((emoji, i) => (
+                <motion.span
+                  key={i}
+                  className="text-lg"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
+                >
+                  {emoji}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Progress dots */}
+          <div className="flex justify-center gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <motion.div
+                key={i}
+                className="w-2 h-2 rounded-full"
+                style={{ background: `hsl(${myTheme.colors.primary})` }}
+                animate={{ scale: [0.5, 1.2, 0.5], opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
