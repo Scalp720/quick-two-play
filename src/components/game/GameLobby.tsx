@@ -195,12 +195,40 @@ export function GameLobby() {
                 color: 'hsl(0 0% 100%)',
               }}
             >
-              {loading ? 'Hatching...' : (
-                <>
-                  <img src={currentTheme.image} alt={currentTheme.name} className="w-6 h-6 object-contain mr-1 inline-block" />
-                  Create Dino Den
-                </>
-              )}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <motion.img
+                  src={currentTheme.image}
+                  alt="Loading"
+                  className="w-6 h-6 object-contain"
+                  animate={{ rotate: [0, 15, -15, 10, -10, 0], y: [0, -4, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.span
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  Hatching
+                </motion.span>
+                <span className="flex gap-0.5">
+                  {[0, 1, 2].map(i => (
+                    <motion.span
+                      key={i}
+                      animate={{ opacity: [0, 1, 0] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }}
+                    >
+                      .
+                    </motion.span>
+                  ))}
+                </span>
+                🥚
+              </span>
+            ) : (
+              <>
+                <img src={currentTheme.image} alt={currentTheme.name} className="w-6 h-6 object-contain mr-1 inline-block" />
+                Create Dino Den
+              </>
+            )}
             </Button>
 
             <div className="flex items-center gap-3">
