@@ -10,6 +10,7 @@ import { CoinFlip } from '@/components/game/CoinFlip';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
 import { EmotePicker, EmoteBubble } from '@/components/game/EmoteDisplay';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,9 @@ export default function GamePage() {
   const [disconnectTimer, setDisconnectTimer] = useState(60);
   const disconnectTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playerId = useRef(getOrCreatePlayerId());
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('tongits_player_name') || '');
 
   function getOrCreatePlayerId() {
     let id = localStorage.getItem('tongits_player_id');
@@ -48,13 +52,30 @@ export default function GamePage() {
     return id;
   }
 
-  const playerName = localStorage.getItem('tongits_player_name') || 'Player';
+  // Show name prompt if no name saved
+  useEffect(() => {
+    if (!playerName) {
+      setShowNamePrompt(true);
+    }
+  }, []);
+
+  const handleNameSubmit = () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      toast.error('Please enter your name!');
+      return;
+    }
+    localStorage.setItem('tongits_player_name', trimmed);
+    setPlayerName(trimmed);
+    setShowNamePrompt(false);
+  };
+
   const myTheme = getThemeById(getSavedTheme());
 
 
   // Join room and subscribe
   useEffect(() => {
-    if (!roomCode) return;
+    if (!roomCode || !playerName) return;
 
     const joinAndSubscribe = async () => {
       // Fetch room
@@ -701,6 +722,36 @@ export default function GamePage() {
       setTimeout(() => setActiveEmote(null), 2500);
     }
   }, [(gameState as any)?.activeEmote?.emote, (gameState as any)?.activeEmote?.from]);
+
+  // Name prompt
+  if (showNamePrompt) {
+    return (
+      <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
+        <FloatingDinos count={8} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-card/90 backdrop-blur-md rounded-2xl p-6 border border-border shadow-2xl w-full max-w-sm text-center space-y-4 z-10"
+        >
+          <img src={myTheme.image} alt={myTheme.name} className="w-16 h-16 mx-auto object-contain" />
+          <h2 className="text-xl font-bold text-foreground">What's your name?</h2>
+          <p className="text-sm text-muted-foreground">Enter your name before joining the game</p>
+          <Input
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Enter your name..."
+            className="text-center text-lg"
+            maxLength={20}
+            autoFocus
+            onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+          />
+          <Button onClick={handleNameSubmit} className="w-full" size="lg">
+            Let's Play! 🦖
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Waiting for opponent
   if (waiting) {
