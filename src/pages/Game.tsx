@@ -342,8 +342,9 @@ export default function GamePage() {
 
   const meldCards = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
-    // Gather cards from both hand and hold zone
-    const cards = [...myHand, ...heldCards].filter(c => selectedCards.includes(c.id));
+    // Deduplicate: visibleHand has cards not in hold, heldCards are the rest
+    const visHand = myHand.filter(c => !heldCards.some(h => h.id === c.id));
+    const cards = [...visHand, ...heldCards].filter(c => selectedCards.includes(c.id));
     if (!isValidMeld(cards)) {
       toast.error('Invalid meld! Need 3+ cards of same rank or consecutive same suit.');
       return;
@@ -940,7 +941,9 @@ export default function GamePage() {
       {isMyTurn && gameState.turnPhase === 'action' && (
         <div className="flex gap-2 px-3 py-2 justify-center flex-wrap">
           {(() => {
-            const meldCandidates = [...myHand, ...heldCards].filter(c => selectedCards.includes(c.id));
+            // Use deduplicated list: visible hand + held cards (held cards are still in myHand, avoid double counting)
+            const allCards = [...visibleHand, ...heldCards];
+            const meldCandidates = allCards.filter(c => selectedCards.includes(c.id));
             const canMeld = meldCandidates.length >= 3 && isValidMeld(meldCandidates);
             // If drawn from discard, meld must include that card
             const meldIncludesDrawn = !drawnFromDiscard || meldCandidates.some(c => c.id === drawnFromDiscard);
