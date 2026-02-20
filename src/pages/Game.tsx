@@ -767,6 +767,18 @@ export default function GamePage() {
         </div>
       </div>
 
+      {/* All melds at the top */}
+      {((opponent?.melds || []).length > 0 || (me?.melds || []).length > 0) && (
+        <div className="px-3 py-2 border-b border-border/50 flex flex-wrap gap-4">
+          {(opponent?.melds || []).length > 0 && (
+            <MeldDisplay melds={opponent?.melds || []} label={`${opponent?.name}'s melds`} onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+          )}
+          {(me?.melds || []).length > 0 && (
+            <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+          )}
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
         {/* Main game area */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -794,11 +806,6 @@ export default function GamePage() {
         <div className="flex gap-1 flex-wrap">
           {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
-        {(opponent?.melds || []).length > 0 && (
-          <div className="px-3 pb-1">
-            <MeldDisplay melds={opponent?.melds || []} label={`${opponent?.name}'s melds`} onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-          </div>
-        )}
       </div>
 
       {/* Center - deck & discard */}
@@ -1085,11 +1092,6 @@ export default function GamePage() {
             </>
           )}
         </div>
-        {(me?.melds || []).length > 0 && (
-          <div className="px-3 pb-2">
-            <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-          </div>
-        )}
       </div>
 
       {/* Emote bubble */}
