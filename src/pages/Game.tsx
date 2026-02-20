@@ -26,7 +26,7 @@ export default function GamePage() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [playerIndex, setPlayerIndex] = useState<number>(-1);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const [heldCards, setHeldCards] = useState<Card[]>([]);
+  const [holdGroups, setHoldGroups] = useState<Card[][]>([]);
   const [waiting, setWaiting] = useState(true);
   const [copied, setCopied] = useState(false);
   const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
@@ -298,27 +298,36 @@ export default function GamePage() {
     );
   }, []);
 
-  // Move selected cards from hand to hold zone
+  // Derived: all held cards flattened
+  const heldCards = holdGroups.flat();
+
+  // Move selected cards from hand to hold zone as a new group
   const holdCards = useCallback(() => {
     if (!gameState) return;
     const cardsToHold = myHand.filter(c => selectedCards.includes(c.id) && !heldCards.some(h => h.id === c.id));
     if (cardsToHold.length === 0) return;
     playClick();
-    setHeldCards(prev => [...prev, ...cardsToHold]);
+    setHoldGroups(prev => [...prev, cardsToHold]);
     setSelectedCards([]);
   }, [gameState, myHand, selectedCards, heldCards]);
 
-  // Return selected held cards back to hand
-  const returnHeldCards = useCallback((cardIds: string[]) => {
+  // Return a single card from a hold group back to hand
+  const returnCardFromGroup = useCallback((groupIndex: number, cardId: string) => {
     playClick();
-    setHeldCards(prev => prev.filter(c => !cardIds.includes(c.id)));
-    setSelectedCards([]);
+    setHoldGroups(prev => {
+      const updated = prev.map((group, i) => {
+        if (i !== groupIndex) return group;
+        return group.filter(c => c.id !== cardId);
+      }).filter(g => g.length > 0);
+      return updated;
+    });
+    setSelectedCards(prev => prev.filter(id => id !== cardId));
   }, []);
 
   // Return all held cards
   const returnAllHeld = useCallback(() => {
     playClick();
-    setHeldCards([]);
+    setHoldGroups([]);
     setSelectedCards([]);
   }, []);
 
@@ -333,7 +342,7 @@ export default function GamePage() {
 
     const newHand = myHand.filter(c => !selectedCards.includes(c.id));
     // Also remove melded cards from hold zone
-    setHeldCards(prev => prev.filter(c => !selectedCards.includes(c.id)));
+    setHoldGroups(prev => prev.map(g => g.filter(c => !selectedCards.includes(c.id))).filter(g => g.length > 0));
     const newMeld = { id: crypto.randomUUID(), cards, owner: playerIndex };
     const newPlayers = [...gameState.players];
     newPlayers[playerIndex] = {
@@ -362,7 +371,7 @@ export default function GamePage() {
       });
     }
     setSelectedCards([]);
-    setHeldCards([]);
+    setHoldGroups([]);
   }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me]);
 
   const layOffCard = useCallback((meldId: string) => {
@@ -563,7 +572,7 @@ export default function GamePage() {
       (newGame.players[1] as any).theme = (gameState.players[1] as any).theme;
       await updateGame(newGame);
       setSelectedCards([]);
-      setHeldCards([]);
+      setHoldGroups([]);
     } else {
       // Request rematch
       await updateGame({ ...gameState, rematchRequested: playerIndex });
@@ -1047,75 +1056,81 @@ export default function GamePage() {
             ))}
           </AnimatePresence>
 
-          {/* Held cards - grouped as a single unit */}
-          {heldCards.length > 0 && (
+          {/* Hold groups */}
+          {holdGroups.length > 0 && (
             <>
               <div className="flex flex-col items-center mx-2 self-stretch justify-center">
                 <div className="w-px h-full bg-accent/50 min-h-[40px]" />
                 <span className="text-[8px] text-accent font-bold my-0.5">HOLD</span>
                 <div className="w-px h-full bg-accent/50 min-h-[40px]" />
               </div>
-              {(() => {
-                const allHeldSelected = heldCards.every(c => selectedCards.includes(c.id));
-                const heldIsValidMeld = heldCards.length >= 3 && isValidMeld(heldCards);
+              {holdGroups.map((group, groupIdx) => {
+                const allGroupSelected = group.every(c => selectedCards.includes(c.id));
+                const groupIsValidMeld = group.length >= 3 && isValidMeld(group);
                 return (
-                  <div
-                    onClick={() => {
-                      playClick();
-                      if (allHeldSelected) {
-                        // Deselect all held cards
-                        setSelectedCards(prev => prev.filter(id => !heldCards.some(c => c.id === id)));
-                      } else {
-                        // Select all held cards as a group
-                        setSelectedCards(prev => {
-                          const nonHeldSelected = prev.filter(id => !heldCards.some(c => c.id === id));
-                          return [...nonHeldSelected, ...heldCards.map(c => c.id)];
-                        });
-                      }
-                    }}
-                    className={cn(
-                      "flex gap-0.5 p-1.5 rounded-xl cursor-pointer transition-all duration-200 border-2 relative",
-                      allHeldSelected
-                        ? heldIsValidMeld
-                          ? "border-primary bg-primary/10 ring-2 ring-primary/40"
-                          : "border-accent bg-accent/10 ring-2 ring-accent/40"
-                        : "border-border/50 bg-secondary/30 hover:border-accent/50"
-                    )}
-                  >
-                    <AnimatePresence>
-                      {heldCards.map((card, i) => (
+                  <div key={groupIdx} className="flex items-end gap-1">
+                    <div
+                      onClick={() => {
+                        playClick();
+                        if (allGroupSelected) {
+                          setSelectedCards(prev => prev.filter(id => !group.some(c => c.id === id)));
+                        } else {
+                          setSelectedCards(prev => {
+                            const withoutGroup = prev.filter(id => !group.some(c => c.id === id));
+                            return [...withoutGroup, ...group.map(c => c.id)];
+                          });
+                        }
+                      }}
+                      className={cn(
+                        "flex gap-0.5 p-1.5 rounded-xl cursor-pointer transition-all duration-200 border-2 relative",
+                        allGroupSelected
+                          ? groupIsValidMeld
+                            ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+                            : "border-accent bg-accent/10 ring-2 ring-accent/40"
+                          : "border-border/50 bg-secondary/30 hover:border-accent/50"
+                      )}
+                    >
+                      <AnimatePresence>
+                        {group.map((card, i) => (
+                          <motion.div
+                            key={card.id}
+                            layout
+                            initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                            animate={{ x: 0, opacity: 1, scale: 1 }}
+                            exit={{ x: 20, opacity: 0, scale: 0.6 }}
+                            transition={{ duration: 0.25, delay: i * 0.02 }}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              returnCardFromGroup(groupIdx, card.id);
+                            }}
+                          >
+                            <PlayingCard
+                              card={card}
+                              index={0}
+                              selected={allGroupSelected}
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      {allGroupSelected && (
                         <motion.div
-                          key={card.id}
-                          layout
-                          initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                          animate={{ x: 0, opacity: 1, scale: 1 }}
-                          exit={{ x: 20, opacity: 0, scale: 0.6 }}
-                          transition={{ duration: 0.25, delay: i * 0.02 }}
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className={cn(
+                            "absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+                            groupIsValidMeld ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                          )}
                         >
-                          <PlayingCard
-                            card={card}
-                            index={0}
-                            selected={allHeldSelected}
-                          />
+                          {groupIsValidMeld ? '✓ Valid' : 'Not valid'}
                         </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    {allHeldSelected && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className={cn(
-                          "absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold",
-                          heldIsValidMeld ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {heldIsValidMeld ? '✓ Valid' : 'Not valid'}
-                      </motion.div>
+                      )}
+                    </div>
+                    {groupIdx < holdGroups.length - 1 && (
+                      <div className="w-px h-8 bg-border/30 mx-0.5" />
                     )}
                   </div>
                 );
-              })()}
-              {/* Return button */}
+              })}
               <button
                 onClick={() => { playClick(); returnAllHeld(); }}
                 className="text-[9px] text-muted-foreground hover:text-accent self-center ml-1 transition-colors"
