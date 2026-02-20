@@ -748,7 +748,7 @@ export default function GamePage() {
   const sortedHand = sortMode === 'rank' ? sortByRank(visibleHand) : sortMode === 'group' ? sortByGroups(visibleHand) : sortHand(visibleHand);
   const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
 
-  const allMeldsExist = (me?.melds || []).length > 0 || (opponent?.melds || []).length > 0;
+  
 
   return (
     <div className="min-h-screen felt-texture flex flex-col overflow-hidden">
@@ -764,31 +764,6 @@ export default function GamePage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left side panel - Melds only */}
-        {allMeldsExist && (
-          <div className="w-[120px] min-w-[120px] border-r border-border/50 p-2 overflow-y-auto space-y-3 bg-card/30">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Melds</span>
-            {(opponent?.melds || []).length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                  <img src={opponentTheme.image} alt="" className="w-3 h-3" />
-                  {opponent?.name}
-                </span>
-                <MeldDisplay melds={opponent?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-              </div>
-            )}
-            {(me?.melds || []).length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                  <img src={myTheme.image} alt="" className="w-3 h-3" />
-                  You
-                </span>
-                <MeldDisplay melds={me?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Main game area */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -815,6 +790,11 @@ export default function GamePage() {
         <div className="flex gap-1 flex-wrap">
           {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
+        {(opponent?.melds || []).length > 0 && (
+          <div className="px-3 pb-1">
+            <MeldDisplay melds={opponent?.melds || []} label={`${opponent?.name}'s melds`} onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+          </div>
+        )}
       </div>
 
       {/* Center - deck & discard */}
@@ -1080,7 +1060,11 @@ export default function GamePage() {
             </>
           )}
         </div>
-
+        {(me?.melds || []).length > 0 && (
+          <div className="px-3 pb-2">
+            <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+          </div>
+        )}
       </div>
 
       {/* Emote bubble */}
