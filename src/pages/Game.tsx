@@ -26,6 +26,7 @@ export default function GamePage() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [playerIndex, setPlayerIndex] = useState<number>(-1);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [heldCards, setHeldCards] = useState<Card[]>([]);
   const [waiting, setWaiting] = useState(true);
   const [copied, setCopied] = useState(false);
   const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
@@ -297,6 +298,30 @@ export default function GamePage() {
     );
   }, []);
 
+  // Move selected cards from hand to hold zone
+  const holdCards = useCallback(() => {
+    if (!gameState) return;
+    const cardsToHold = myHand.filter(c => selectedCards.includes(c.id) && !heldCards.some(h => h.id === c.id));
+    if (cardsToHold.length === 0) return;
+    playClick();
+    setHeldCards(prev => [...prev, ...cardsToHold]);
+    setSelectedCards([]);
+  }, [gameState, myHand, selectedCards, heldCards]);
+
+  // Return selected held cards back to hand
+  const returnHeldCards = useCallback((cardIds: string[]) => {
+    playClick();
+    setHeldCards(prev => prev.filter(c => !cardIds.includes(c.id)));
+    setSelectedCards([]);
+  }, []);
+
+  // Return all held cards
+  const returnAllHeld = useCallback(() => {
+    playClick();
+    setHeldCards([]);
+    setSelectedCards([]);
+  }, []);
+
   const meldCards = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
     const cards = myHand.filter(c => selectedCards.includes(c.id));
@@ -534,6 +559,7 @@ export default function GamePage() {
       (newGame.players[1] as any).theme = (gameState.players[1] as any).theme;
       await updateGame(newGame);
       setSelectedCards([]);
+      setHeldCards([]);
     } else {
       // Request rematch
       await updateGame({ ...gameState, rematchRequested: playerIndex });
@@ -717,7 +743,9 @@ export default function GamePage() {
     );
   }
 
-  const sortedHand = sortMode === 'rank' ? sortByRank(myHand) : sortMode === 'group' ? sortByGroups(myHand) : sortHand(myHand);
+  // Filter held cards from displayed hand
+  const visibleHand = myHand.filter(c => !heldCards.some(h => h.id === c.id));
+  const sortedHand = sortMode === 'rank' ? sortByRank(visibleHand) : sortMode === 'group' ? sortByGroups(visibleHand) : sortHand(visibleHand);
   const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
 
   const allMeldsExist = (me?.melds || []).length > 0 || (opponent?.melds || []).length > 0;
@@ -736,27 +764,67 @@ export default function GamePage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left side panel - Melds */}
-        {allMeldsExist && (
+        {/* Left side panel - Hold Zone & Melds */}
+        {(allMeldsExist || heldCards.length > 0) && (
           <div className="w-[120px] min-w-[120px] border-r border-border/50 p-2 overflow-y-auto space-y-3 bg-card/30">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Melds</span>
-            {(opponent?.melds || []).length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                  <img src={opponentTheme.image} alt="" className="w-3 h-3" />
-                  {opponent?.name}
-                </span>
-                <MeldDisplay melds={opponent?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+            {/* Hold Zone */}
+            {heldCards.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-accent uppercase tracking-widest">📌 Hold</span>
+                  <button onClick={returnAllHeld} className="text-[8px] text-muted-foreground hover:text-foreground underline">
+                    Return All
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-0.5">
+                  {heldCards.map((card) => {
+                    const isRed = getSuitColor(card.suit) === 'red';
+                    return (
+                      <motion.div
+                        key={card.id}
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="w-[28px] h-[40px] rounded bg-card-white flex flex-col items-center justify-center text-[8px] card-shadow cursor-pointer hover:ring-1 hover:ring-accent border border-accent/30"
+                        onClick={() => returnHeldCards([card.id])}
+                        title="Click to return to hand"
+                      >
+                        <span className={cn("font-bold leading-none", isRed ? "text-card-red" : "text-card-black")}>
+                          {card.rank}
+                        </span>
+                        <span className={cn("leading-none", isRed ? "text-card-red" : "text-card-black")}>
+                          {getSuitSymbol(card.suit)}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                <p className="text-[8px] text-muted-foreground italic">Tap card to return</p>
               </div>
             )}
-            {(me?.melds || []).length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                  <img src={myTheme.image} alt="" className="w-3 h-3" />
-                  You
-                </span>
-                <MeldDisplay melds={me?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-              </div>
+
+            {/* Melds */}
+            {allMeldsExist && (
+              <>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Melds</span>
+                {(opponent?.melds || []).length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                      <img src={opponentTheme.image} alt="" className="w-3 h-3" />
+                      {opponent?.name}
+                    </span>
+                    <MeldDisplay melds={opponent?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+                  </div>
+                )}
+                {(me?.melds || []).length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                      <img src={myTheme.image} alt="" className="w-3 h-3" />
+                      You
+                    </span>
+                    <MeldDisplay melds={me?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -881,6 +949,15 @@ export default function GamePage() {
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Meld ({selectedCards.length})
+          </Button>
+          <Button
+            size="sm"
+            onClick={holdCards}
+            disabled={selectedCards.length === 0 || selectedCards.every(id => heldCards.some(h => h.id === id))}
+            variant="outline"
+            className="border-accent text-accent"
+          >
+            📌 Hold ({selectedCards.length})
           </Button>
           <Button
             size="sm"
