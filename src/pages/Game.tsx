@@ -348,6 +348,8 @@ export default function GamePage() {
       });
     }
     setSelectedCards([]);
+    // Remove auto-melded cards from hold groups
+    setHoldGroups(prev => prev.map(g => g.filter(c => !selectedCards.includes(c.id))).filter(g => g.length > 0));
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
 
   const toggleCardSelection = useCallback((cardId: string) => {
@@ -946,7 +948,8 @@ export default function GamePage() {
             <div className="text-center space-y-1">
               <motion.div
                 onClick={
-                  canPick ? drawFromDiscard
+                  canAutoMeld ? autoDrawAndMeld
+                  : canPick ? drawFromDiscard
                   : isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? () => toast.error('No matching cards in your hand for this discard!')
                   : undefined
                 }
