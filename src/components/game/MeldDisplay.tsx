@@ -13,9 +13,9 @@ export function MeldDisplay({ melds, label, onLayOff, canLayOff, highlightedMeld
   if (melds.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-      <div className="flex flex-wrap gap-3">
+    <div className="space-y-1.5">
+      {label && <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>}
+      <div className="flex flex-wrap gap-2">
         {melds.map((meld) => {
           const isHighlighted = highlightedMeldIds.includes(meld.id);
           return (
@@ -23,7 +23,7 @@ export function MeldDisplay({ melds, label, onLayOff, canLayOff, highlightedMeld
               key={meld.id}
               onClick={() => canLayOff && onLayOff?.(meld.id)}
               className={cn(
-                "flex gap-0.5 p-2 rounded-lg bg-secondary/50 border border-border transition-all duration-200",
+                "flex gap-0.5 p-1.5 rounded-lg bg-secondary/50 border border-border transition-all duration-200",
                 canLayOff && "cursor-pointer hover:border-primary",
                 isHighlighted && "border-primary ring-2 ring-primary/50 bg-primary/10 animate-pulse"
               )}
@@ -33,12 +33,12 @@ export function MeldDisplay({ melds, label, onLayOff, canLayOff, highlightedMeld
                 return (
                   <div
                     key={card.id}
-                    className="w-[36px] h-[50px] rounded bg-card-white flex flex-col items-center justify-center text-xs card-shadow"
+                    className="w-[28px] h-[40px] rounded bg-card-white flex flex-col items-center justify-center text-[8px] card-shadow"
                   >
-                    <span className={cn("font-bold", isRed ? "text-card-red" : "text-card-black")}>
+                    <span className={cn("font-bold leading-none", isRed ? "text-card-red" : "text-card-black")}>
                       {card.rank}
                     </span>
-                    <span className={cn(isRed ? "text-card-red" : "text-card-black")}>
+                    <span className={cn("leading-none", isRed ? "text-card-red" : "text-card-black")}>
                       {getSuitSymbol(card.suit)}
                     </span>
                   </div>
