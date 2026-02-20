@@ -805,17 +805,6 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* All melds at the top */}
-      {((opponent?.melds || []).length > 0 || (me?.melds || []).length > 0) && (
-        <div className="px-3 py-2 border-b border-border/50 flex flex-wrap gap-4">
-          {(opponent?.melds || []).length > 0 && (
-            <MeldDisplay melds={opponent?.melds || []} label={`${opponent?.name}'s melds`} onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-          )}
-          {(me?.melds || []).length > 0 && (
-            <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-          )}
-        </div>
-      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main game area */}
@@ -844,6 +833,9 @@ export default function GamePage() {
         <div className="flex gap-1 flex-wrap">
           {opponent?.hand.map((_, i) => <CardBack key={i} index={i} theme={opponentTheme} />)}
         </div>
+        {(opponent?.melds || []).length > 0 && (
+          <MeldDisplay melds={opponent?.melds || []} label={`${opponent?.name}'s melds`} onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+        )}
       </div>
 
       {/* Center - deck & discard */}
@@ -1037,6 +1029,9 @@ export default function GamePage() {
 
       {/* My hand */}
       <div className="p-3 pb-4 space-y-2 border-t border-border/50">
+        {(me?.melds || []).length > 0 && (
+          <MeldDisplay melds={me?.melds || []} label="Your melds" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+        )}
         <div className="flex items-center gap-2">
           <span className={cn(
             "text-sm font-semibold flex items-center gap-1",
