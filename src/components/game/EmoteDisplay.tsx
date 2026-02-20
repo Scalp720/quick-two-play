@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { playEmote } from '@/lib/sounds';
 
-const EMOTES = ['🦖', '🦕', '😂', '😤', '🔥', '💀', '👏', '😎', '🤔', '😱', '🫣', '🤢'];
+const EMOTES = ['🦖', '🦕', '😂', '😤', '🔥', '💀', '👏', '😎', '🤔', '😱', '🫣', '🤢', '🤦‍♀️'];
 
 interface EmoteDisplayProps {
   onSendEmote: (emote: string) => void;
