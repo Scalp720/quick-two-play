@@ -945,8 +945,7 @@ export default function GamePage() {
             <div className="text-center space-y-1">
               <motion.div
                 onClick={
-                  canAutoMeld ? autoDrawAndMeld
-                  : canPick ? drawFromDiscard
+                  canPick ? drawFromDiscard
                   : isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? () => toast.error('No matching cards in your hand for this discard!')
                   : undefined
                 }
@@ -979,17 +978,8 @@ export default function GamePage() {
                     <span className="text-[10px] text-muted-foreground">Empty</span>
                   )}
                 </AnimatePresence>
-                {canAutoMeld && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -bottom-6 text-[9px] font-bold text-primary whitespace-nowrap"
-                  >
-                    ✨ Tap to auto-meld!
-                  </motion.div>
-                )}
               </motion.div>
-              <span className={cn("text-[10px] text-muted-foreground", canAutoMeld && "mt-4 block")}>
+              <span className="text-[10px] text-muted-foreground">
                 Discard ({gameState.discardPile.length})
               </span>
             </div>
