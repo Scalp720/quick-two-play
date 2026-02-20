@@ -764,67 +764,27 @@ export default function GamePage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left side panel - Hold Zone & Melds */}
-        {(allMeldsExist || heldCards.length > 0) && (
+        {/* Left side panel - Melds only */}
+        {allMeldsExist && (
           <div className="w-[120px] min-w-[120px] border-r border-border/50 p-2 overflow-y-auto space-y-3 bg-card/30">
-            {/* Hold Zone */}
-            {heldCards.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-accent uppercase tracking-widest">📌 Hold</span>
-                  <button onClick={returnAllHeld} className="text-[8px] text-muted-foreground hover:text-foreground underline">
-                    Return All
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-0.5">
-                  {heldCards.map((card) => {
-                    const isRed = getSuitColor(card.suit) === 'red';
-                    return (
-                      <motion.div
-                        key={card.id}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="w-[28px] h-[40px] rounded bg-card-white flex flex-col items-center justify-center text-[8px] card-shadow cursor-pointer hover:ring-1 hover:ring-accent border border-accent/30"
-                        onClick={() => returnHeldCards([card.id])}
-                        title="Click to return to hand"
-                      >
-                        <span className={cn("font-bold leading-none", isRed ? "text-card-red" : "text-card-black")}>
-                          {card.rank}
-                        </span>
-                        <span className={cn("leading-none", isRed ? "text-card-red" : "text-card-black")}>
-                          {getSuitSymbol(card.suit)}
-                        </span>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-                <p className="text-[8px] text-muted-foreground italic">Tap card to return</p>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Melds</span>
+            {(opponent?.melds || []).length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                  <img src={opponentTheme.image} alt="" className="w-3 h-3" />
+                  {opponent?.name}
+                </span>
+                <MeldDisplay melds={opponent?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
               </div>
             )}
-
-            {/* Melds */}
-            {allMeldsExist && (
-              <>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Melds</span>
-                {(opponent?.melds || []).length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                      <img src={opponentTheme.image} alt="" className="w-3 h-3" />
-                      {opponent?.name}
-                    </span>
-                    <MeldDisplay melds={opponent?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-                  </div>
-                )}
-                {(me?.melds || []).length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                      <img src={myTheme.image} alt="" className="w-3 h-3" />
-                      You
-                    </span>
-                    <MeldDisplay melds={me?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
-                  </div>
-                )}
-              </>
+            {(me?.melds || []).length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                  <img src={myTheme.image} alt="" className="w-3 h-3" />
+                  You
+                </span>
+                <MeldDisplay melds={me?.melds || []} label="" onLayOff={layOffCard} canLayOff={isMyTurn && gameState.turnPhase === 'action' && selectedCards.length >= 1} highlightedMeldIds={highlightedMeldIds} />
+              </div>
             )}
           </div>
         )}
@@ -1064,7 +1024,8 @@ export default function GamePage() {
             Pts: {calculateHandPoints(myHand)}
           </span>
         </div>
-        <div className="flex gap-1 flex-wrap justify-center">
+        <div className="flex gap-1 flex-wrap justify-center items-end">
+          {/* Main hand cards */}
           <AnimatePresence>
             {sortedHand.map((card, i) => (
               <motion.div
@@ -1088,6 +1049,36 @@ export default function GamePage() {
               </motion.div>
             ))}
           </AnimatePresence>
+
+          {/* Held cards - separated with a divider */}
+          {heldCards.length > 0 && (
+            <>
+              <div className="flex flex-col items-center mx-2 self-stretch justify-center">
+                <div className="w-px h-full bg-accent/50 min-h-[40px]" />
+                <span className="text-[8px] text-accent font-bold my-0.5">HOLD</span>
+                <div className="w-px h-full bg-accent/50 min-h-[40px]" />
+              </div>
+              <AnimatePresence>
+                {heldCards.map((card, i) => (
+                  <motion.div
+                    key={card.id}
+                    layout
+                    initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                    animate={{ x: 0, opacity: 1, scale: 1 }}
+                    exit={{ x: 20, opacity: 0, scale: 0.6 }}
+                    transition={{ duration: 0.25, delay: i * 0.02 }}
+                  >
+                    <PlayingCard
+                      card={card}
+                      index={0}
+                      selected={selectedCards.includes(card.id)}
+                      onClick={() => returnHeldCards([card.id])}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </>
+          )}
         </div>
 
       </div>
