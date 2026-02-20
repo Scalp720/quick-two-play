@@ -27,6 +27,7 @@ export default function GamePage() {
   const [playerIndex, setPlayerIndex] = useState<number>(-1);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [holdGroups, setHoldGroups] = useState<Card[][]>([]);
+  const [drawnFromDiscard, setDrawnFromDiscard] = useState<string | null>(null); // card ID forced to meld
   const [waiting, setWaiting] = useState(true);
   const [copied, setCopied] = useState(false);
   const [sortMode, setSortMode] = useState<'suit' | 'rank' | 'group'>('suit');
@@ -281,15 +282,16 @@ export default function GamePage() {
 
     playCardDraw();
     setDrawAnim('discard');
+    setDrawnFromDiscard(card.id); // Track: must meld with this card
     setTimeout(() => setDrawAnim(null), 400);
     updateGame({
       ...gameState,
       discardPile: newDiscard,
       players: newPlayers,
       turnPhase: 'action',
-      lastAction: `${me?.name} picked up from discard`,
+      lastAction: `${me?.name} picked up from discard (must meld!)`,
     });
-  }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
+  }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me, canPickDiscard]);
 
   const toggleCardSelection = useCallback((cardId: string) => {
     playClick();
@@ -324,6 +326,13 @@ export default function GamePage() {
     setSelectedCards(prev => prev.filter(id => id !== cardId));
   }, []);
 
+  // Return a specific hold group
+  const returnGroup = useCallback((groupIndex: number) => {
+    playClick();
+    setHoldGroups(prev => prev.filter((_, i) => i !== groupIndex));
+    setSelectedCards([]);
+  }, []);
+
   // Return all held cards
   const returnAllHeld = useCallback(() => {
     playClick();
@@ -340,6 +349,14 @@ export default function GamePage() {
       return;
     }
 
+    // If drawn from discard, the meld MUST include that card
+    if (drawnFromDiscard) {
+      if (!cards.some(c => c.id === drawnFromDiscard)) {
+        toast.error('You must meld with the card you picked from discard!');
+        return;
+      }
+    }
+
     const newHand = myHand.filter(c => !selectedCards.includes(c.id));
     // Also remove melded cards from hold zone
     setHoldGroups(prev => prev.map(g => g.filter(c => !selectedCards.includes(c.id))).filter(g => g.length > 0));
@@ -350,6 +367,9 @@ export default function GamePage() {
       hand: newHand,
       melds: [...newPlayers[playerIndex].melds, newMeld],
     };
+
+    // Clear discard draw tracking after successful meld
+    setDrawnFromDiscard(null);
 
     // Check for Tong Its (empty hand)
     if (newHand.length === 0) {
@@ -372,7 +392,7 @@ export default function GamePage() {
     }
     setSelectedCards([]);
     setHoldGroups([]);
-  }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me]);
+  }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me, drawnFromDiscard]);
 
   const layOffCard = useCallback((meldId: string) => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
@@ -455,6 +475,12 @@ export default function GamePage() {
       return;
     }
 
+    // Cannot discard until the discard-drawn card has been melded
+    if (drawnFromDiscard) {
+      toast.error('You must meld with the card you picked from discard first!');
+      return;
+    }
+
     // Prevent discard if the selected card can be sapaw'd
     if (canSelectedCardSapaw) {
       toast.error('This card can be sapaw\'d! Choose a different card or sapaw it first.');
@@ -497,8 +523,9 @@ export default function GamePage() {
         });
       }
       setSelectedCards([]);
+      setDrawnFromDiscard(null);
     }, 300);
-  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSelectedCardSapaw]);
+  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSelectedCardSapaw, drawnFromDiscard]);
 
   const callDraw = useCallback(() => {
     if (!gameState || !isMyTurn) return;
@@ -573,6 +600,7 @@ export default function GamePage() {
       await updateGame(newGame);
       setSelectedCards([]);
       setHoldGroups([]);
+      setDrawnFromDiscard(null);
     } else {
       // Request rematch
       await updateGame({ ...gameState, rematchRequested: playerIndex });
@@ -899,20 +927,35 @@ export default function GamePage() {
         )}
       </div>
 
+      {/* Forced meld indicator */}
+      {isMyTurn && drawnFromDiscard && gameState.turnPhase === 'action' && (
+        <div className="text-center py-1">
+          <span className="text-xs bg-accent/20 text-accent px-3 py-1 rounded-full font-medium animate-pulse">
+            ⚠️ You must meld with the card you picked from discard!
+          </span>
+        </div>
+      )}
+
       {/* Action buttons */}
       {isMyTurn && gameState.turnPhase === 'action' && (
         <div className="flex gap-2 px-3 py-2 justify-center flex-wrap">
           {(() => {
             const meldCandidates = [...myHand, ...heldCards].filter(c => selectedCards.includes(c.id));
             const canMeld = meldCandidates.length >= 3 && isValidMeld(meldCandidates);
+            // If drawn from discard, meld must include that card
+            const meldIncludesDrawn = !drawnFromDiscard || meldCandidates.some(c => c.id === drawnFromDiscard);
             return (
               <Button
                 size="sm"
                 onClick={meldCards}
                 disabled={!canMeld}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className={cn(
+                  "bg-primary text-primary-foreground hover:bg-primary/90",
+                  drawnFromDiscard && "ring-2 ring-accent animate-pulse"
+                )}
               >
                 Meld ({meldCandidates.length})
+                {drawnFromDiscard && !meldIncludesDrawn && " ⚠️"}
               </Button>
             );
           })()}
@@ -928,7 +971,7 @@ export default function GamePage() {
           <Button
             size="sm"
             onClick={discardCard}
-            disabled={selectedCards.length !== 1}
+            disabled={selectedCards.length !== 1 || !!drawnFromDiscard}
             variant="outline"
             className="border-primary text-primary"
           >
@@ -1046,12 +1089,14 @@ export default function GamePage() {
                 exit={{ y: -80, opacity: 0, scale: 0.6 }}
                 transition={{ duration: 0.3, delay: discardAnim ? 0 : i * 0.02 }}
               >
-                <PlayingCard
-                  card={card}
-                  index={0}
-                  selected={selectedCards.includes(card.id)}
-                  onClick={() => toggleCardSelection(card.id)}
-                />
+                <div className={cn(drawnFromDiscard === card.id && "ring-2 ring-accent rounded-lg animate-pulse")}>
+                  <PlayingCard
+                    card={card}
+                    index={0}
+                    selected={selectedCards.includes(card.id)}
+                    onClick={() => toggleCardSelection(card.id)}
+                  />
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -1068,66 +1113,73 @@ export default function GamePage() {
                 const allGroupSelected = group.every(c => selectedCards.includes(c.id));
                 const groupIsValidMeld = group.length >= 3 && isValidMeld(group);
                 return (
-                  <div key={groupIdx} className="flex items-end gap-1">
-                    <div
-                      onClick={() => {
-                        playClick();
-                        if (allGroupSelected) {
-                          setSelectedCards(prev => prev.filter(id => !group.some(c => c.id === id)));
-                        } else {
-                          setSelectedCards(prev => {
-                            const withoutGroup = prev.filter(id => !group.some(c => c.id === id));
-                            return [...withoutGroup, ...group.map(c => c.id)];
-                          });
-                        }
-                      }}
-                      className={cn(
-                        "flex gap-0.5 p-1.5 rounded-xl cursor-pointer transition-all duration-200 border-2 relative",
-                        allGroupSelected
-                          ? groupIsValidMeld
-                            ? "border-primary bg-primary/10 ring-2 ring-primary/40"
-                            : "border-accent bg-accent/10 ring-2 ring-accent/40"
-                          : "border-border/50 bg-secondary/30 hover:border-accent/50"
-                      )}
-                    >
-                      <AnimatePresence>
-                        {group.map((card, i) => (
+                  <div key={groupIdx} className="flex flex-col items-center gap-0.5">
+                    <div className="flex items-end gap-1">
+                      <div
+                        onClick={() => {
+                          playClick();
+                          if (allGroupSelected) {
+                            setSelectedCards(prev => prev.filter(id => !group.some(c => c.id === id)));
+                          } else {
+                            setSelectedCards(prev => {
+                              const withoutGroup = prev.filter(id => !group.some(c => c.id === id));
+                              return [...withoutGroup, ...group.map(c => c.id)];
+                            });
+                          }
+                        }}
+                        className={cn(
+                          "flex gap-0.5 p-1.5 rounded-xl cursor-pointer transition-all duration-200 border-2 relative",
+                          allGroupSelected
+                            ? groupIsValidMeld
+                              ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+                              : "border-accent bg-accent/10 ring-2 ring-accent/40"
+                            : "border-border/50 bg-secondary/30 hover:border-accent/50"
+                        )}
+                      >
+                        <AnimatePresence>
+                          {group.map((card, i) => (
+                            <motion.div
+                              key={card.id}
+                              layout
+                              initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                              animate={{ x: 0, opacity: 1, scale: 1 }}
+                              exit={{ x: 20, opacity: 0, scale: 0.6 }}
+                              transition={{ duration: 0.25, delay: i * 0.02 }}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                returnCardFromGroup(groupIdx, card.id);
+                              }}
+                            >
+                              <PlayingCard
+                                card={card}
+                                index={0}
+                                selected={allGroupSelected}
+                              />
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                        {allGroupSelected && (
                           <motion.div
-                            key={card.id}
-                            layout
-                            initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                            animate={{ x: 0, opacity: 1, scale: 1 }}
-                            exit={{ x: 20, opacity: 0, scale: 0.6 }}
-                            transition={{ duration: 0.25, delay: i * 0.02 }}
-                            onDoubleClick={(e) => {
-                              e.stopPropagation();
-                              returnCardFromGroup(groupIdx, card.id);
-                            }}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={cn(
+                              "absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+                              groupIsValidMeld ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                            )}
                           >
-                            <PlayingCard
-                              card={card}
-                              index={0}
-                              selected={allGroupSelected}
-                            />
+                            {groupIsValidMeld ? '✓ Valid' : 'Not valid'}
                           </motion.div>
-                        ))}
-                      </AnimatePresence>
-                      {allGroupSelected && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={cn(
-                            "absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold",
-                            groupIsValidMeld ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {groupIsValidMeld ? '✓ Valid' : 'Not valid'}
-                        </motion.div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                    {groupIdx < holdGroups.length - 1 && (
-                      <div className="w-px h-8 bg-border/30 mx-0.5" />
-                    )}
+                    {/* Per-group return button */}
+                    <button
+                      onClick={() => returnGroup(groupIdx)}
+                      className="text-[9px] text-muted-foreground hover:text-accent transition-colors"
+                      title={`Return group ${groupIdx + 1} to hand`}
+                    >
+                      ↩ return
+                    </button>
                   </div>
                 );
               })}
