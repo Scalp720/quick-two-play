@@ -449,7 +449,6 @@ export default function GamePage() {
       });
     }
     setSelectedCards([]);
-    setHoldGroups([]);
   }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me, drawnFromDiscard]);
 
   const layOffCard = useCallback((meldId: string) => {
@@ -581,6 +580,8 @@ export default function GamePage() {
         });
       }
       setSelectedCards([]);
+      // Remove discarded card from hold groups if it was held
+      setHoldGroups(prev => prev.map(g => g.filter(c => c.id !== card.id)).filter(g => g.length > 0));
       setDrawnFromDiscard(null);
     }, 300);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSelectedCardSapaw, drawnFromDiscard]);
