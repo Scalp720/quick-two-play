@@ -1047,7 +1047,7 @@ export default function GamePage() {
             ))}
           </AnimatePresence>
 
-          {/* Held cards - separated with a divider */}
+          {/* Held cards - grouped as a single unit */}
           {heldCards.length > 0 && (
             <>
               <div className="flex flex-col items-center mx-2 self-stretch justify-center">
@@ -1055,40 +1055,74 @@ export default function GamePage() {
                 <span className="text-[8px] text-accent font-bold my-0.5">HOLD</span>
                 <div className="w-px h-full bg-accent/50 min-h-[40px]" />
               </div>
-              <AnimatePresence>
-          {heldCards.map((card, i) => {
-                  const allHeldSelected = heldCards.every(c => selectedCards.includes(c.id));
-                  return (
-                    <motion.div
-                      key={card.id}
-                      layout
-                      initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                      animate={{ x: 0, opacity: 1, scale: 1 }}
-                      exit={{ x: 20, opacity: 0, scale: 0.6 }}
-                      transition={{ duration: 0.25, delay: i * 0.02 }}
-                    >
-                      <PlayingCard
-                        card={card}
-                        index={0}
-                        selected={selectedCards.includes(card.id)}
-                        onClick={() => {
-                          playClick();
-                          if (allHeldSelected) {
-                            // Deselect all held cards and return them
-                            returnHeldCards(heldCards.map(c => c.id));
-                          } else {
-                            // Select all held cards as a group
-                            setSelectedCards(prev => {
-                              const nonHeldSelected = prev.filter(id => !heldCards.some(c => c.id === id));
-                              return [...nonHeldSelected, ...heldCards.map(c => c.id)];
-                            });
-                          }
-                        }}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+              {(() => {
+                const allHeldSelected = heldCards.every(c => selectedCards.includes(c.id));
+                const heldIsValidMeld = heldCards.length >= 3 && isValidMeld(heldCards);
+                return (
+                  <div
+                    onClick={() => {
+                      playClick();
+                      if (allHeldSelected) {
+                        // Deselect all held cards
+                        setSelectedCards(prev => prev.filter(id => !heldCards.some(c => c.id === id)));
+                      } else {
+                        // Select all held cards as a group
+                        setSelectedCards(prev => {
+                          const nonHeldSelected = prev.filter(id => !heldCards.some(c => c.id === id));
+                          return [...nonHeldSelected, ...heldCards.map(c => c.id)];
+                        });
+                      }
+                    }}
+                    className={cn(
+                      "flex gap-0.5 p-1.5 rounded-xl cursor-pointer transition-all duration-200 border-2 relative",
+                      allHeldSelected
+                        ? heldIsValidMeld
+                          ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+                          : "border-accent bg-accent/10 ring-2 ring-accent/40"
+                        : "border-border/50 bg-secondary/30 hover:border-accent/50"
+                    )}
+                  >
+                    <AnimatePresence>
+                      {heldCards.map((card, i) => (
+                        <motion.div
+                          key={card.id}
+                          layout
+                          initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                          animate={{ x: 0, opacity: 1, scale: 1 }}
+                          exit={{ x: 20, opacity: 0, scale: 0.6 }}
+                          transition={{ duration: 0.25, delay: i * 0.02 }}
+                        >
+                          <PlayingCard
+                            card={card}
+                            index={0}
+                            selected={allHeldSelected}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {allHeldSelected && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={cn(
+                          "absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+                          heldIsValidMeld ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {heldIsValidMeld ? '✓ Valid' : 'Not valid'}
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })()}
+              {/* Return button */}
+              <button
+                onClick={() => { playClick(); returnAllHeld(); }}
+                className="text-[9px] text-muted-foreground hover:text-accent self-center ml-1 transition-colors"
+                title="Return all held cards"
+              >
+                ↩
+              </button>
             </>
           )}
         </div>

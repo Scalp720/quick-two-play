@@ -54,3 +54,8 @@ export function playFight() {
   setTimeout(() => playTone(500, 0.15, 'sawtooth', 0.12), 100);
   setTimeout(() => playTone(700, 0.2, 'triangle', 0.14), 200);
 }
+
+export function playEmote() {
+  playTone(900, 0.06, 'sine', 0.1);
+  setTimeout(() => playTone(1200, 0.08, 'sine', 0.12), 60);
+}
