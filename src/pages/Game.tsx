@@ -324,13 +324,16 @@ export default function GamePage() {
 
   const meldCards = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
-    const cards = myHand.filter(c => selectedCards.includes(c.id));
+    // Gather cards from both hand and hold zone
+    const cards = [...myHand, ...heldCards].filter(c => selectedCards.includes(c.id));
     if (!isValidMeld(cards)) {
       toast.error('Invalid meld! Need 3+ cards of same rank or consecutive same suit.');
       return;
     }
 
     const newHand = myHand.filter(c => !selectedCards.includes(c.id));
+    // Also remove melded cards from hold zone
+    setHeldCards(prev => prev.filter(c => !selectedCards.includes(c.id)));
     const newMeld = { id: crypto.randomUUID(), cards, owner: playerIndex };
     const newPlayers = [...gameState.players];
     newPlayers[playerIndex] = {
@@ -359,7 +362,8 @@ export default function GamePage() {
       });
     }
     setSelectedCards([]);
-  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
+    setHeldCards([]);
+  }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me]);
 
   const layOffCard = useCallback((meldId: string) => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'action') return;
@@ -882,14 +886,20 @@ export default function GamePage() {
       {/* Action buttons */}
       {isMyTurn && gameState.turnPhase === 'action' && (
         <div className="flex gap-2 px-3 py-2 justify-center flex-wrap">
-          <Button
-            size="sm"
-            onClick={meldCards}
-            disabled={selectedCards.length < 3}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Meld ({selectedCards.length})
-          </Button>
+          {(() => {
+            const meldCandidates = [...myHand, ...heldCards].filter(c => selectedCards.includes(c.id));
+            const canMeld = meldCandidates.length >= 3 && isValidMeld(meldCandidates);
+            return (
+              <Button
+                size="sm"
+                onClick={meldCards}
+                disabled={!canMeld}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Meld ({meldCandidates.length})
+              </Button>
+            );
+          })()}
           <Button
             size="sm"
             onClick={holdCards}
@@ -1039,23 +1049,38 @@ export default function GamePage() {
                 <div className="w-px h-full bg-accent/50 min-h-[40px]" />
               </div>
               <AnimatePresence>
-                {heldCards.map((card, i) => (
-                  <motion.div
-                    key={card.id}
-                    layout
-                    initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                    animate={{ x: 0, opacity: 1, scale: 1 }}
-                    exit={{ x: 20, opacity: 0, scale: 0.6 }}
-                    transition={{ duration: 0.25, delay: i * 0.02 }}
-                  >
-                    <PlayingCard
-                      card={card}
-                      index={0}
-                      selected={selectedCards.includes(card.id)}
-                      onClick={() => returnHeldCards([card.id])}
-                    />
-                  </motion.div>
-                ))}
+          {heldCards.map((card, i) => {
+                  const allHeldSelected = heldCards.every(c => selectedCards.includes(c.id));
+                  return (
+                    <motion.div
+                      key={card.id}
+                      layout
+                      initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                      animate={{ x: 0, opacity: 1, scale: 1 }}
+                      exit={{ x: 20, opacity: 0, scale: 0.6 }}
+                      transition={{ duration: 0.25, delay: i * 0.02 }}
+                    >
+                      <PlayingCard
+                        card={card}
+                        index={0}
+                        selected={selectedCards.includes(card.id)}
+                        onClick={() => {
+                          playClick();
+                          if (allHeldSelected) {
+                            // Deselect all held cards and return them
+                            returnHeldCards(heldCards.map(c => c.id));
+                          } else {
+                            // Select all held cards as a group
+                            setSelectedCards(prev => {
+                              const nonHeldSelected = prev.filter(id => !heldCards.some(c => c.id === id));
+                              return [...nonHeldSelected, ...heldCards.map(c => c.id)];
+                            });
+                          }
+                        }}
+                      />
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </>
           )}
