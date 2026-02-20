@@ -293,6 +293,63 @@ export default function GamePage() {
     });
   }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me, canPickDiscard]);
 
+  // Check if selected cards + discard top = valid meld (auto-meld hint)
+  const discardAutoMeld = useCallback((): boolean => {
+    if (!gameState || selectedCards.length < 2) return false;
+    const top = gameState.discardPile[gameState.discardPile.length - 1];
+    if (!top) return false;
+    const selected = myHand.filter(c => selectedCards.includes(c.id));
+    return isValidMeld([...selected, top]);
+  }, [gameState, myHand, selectedCards]);
+
+  // Auto draw from discard and immediately meld
+  const autoDrawAndMeld = useCallback(() => {
+    if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
+    const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+    if (!topCard) return;
+    const selected = myHand.filter(c => selectedCards.includes(c.id));
+    const meldCards2 = [...selected, topCard];
+    if (!isValidMeld(meldCards2)) return;
+
+    const newDiscard = [...gameState.discardPile];
+    newDiscard.pop();
+    const newHand = myHand.filter(c => !selectedCards.includes(c.id));
+    const newMeld = { id: crypto.randomUUID(), cards: meldCards2, owner: playerIndex };
+    const newPlayers = [...gameState.players];
+    newPlayers[playerIndex] = {
+      ...newPlayers[playerIndex],
+      hand: newHand,
+      melds: [...newPlayers[playerIndex].melds, newMeld],
+    };
+
+    playCardDraw();
+    setTimeout(() => playMeld(), 200);
+    setDrawAnim('discard');
+    setTimeout(() => setDrawAnim(null), 400);
+
+    if (newHand.length === 0) {
+      playWin();
+      updateGame({
+        ...gameState,
+        discardPile: newDiscard,
+        players: newPlayers,
+        phase: 'finished',
+        winner: playerIndex,
+        winMethod: `Tong Its! ${me?.name} wins by using all cards!`,
+        lastAction: `${me?.name} auto-melded from discard and called Tong Its!`,
+      });
+    } else {
+      updateGame({
+        ...gameState,
+        discardPile: newDiscard,
+        players: newPlayers,
+        turnPhase: 'action',
+        lastAction: `${me?.name} drew from discard and melded ${meldCards2.length} cards`,
+      });
+    }
+    setSelectedCards([]);
+  }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
+
   const toggleCardSelection = useCallback((cardId: string) => {
     playClick();
     setSelectedCards(prev =>
@@ -881,36 +938,63 @@ export default function GamePage() {
         </AnimatePresence>
 
         {/* Discard pile */}
-        <div className="text-center space-y-1">
-          <motion.div
-            onClick={isMyTurn && gameState.turnPhase === 'draw' && topDiscard && canPickDiscard() ? drawFromDiscard : isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? () => toast.error('No matching cards in your hand for this discard!') : undefined}
-            animate={drawAnim === 'discard' ? { scale: [1, 0.9, 1] } : {}}
-            transition={{ duration: 0.3 }}
-            className={cn(
-              "w-[52px] h-[74px] rounded-lg border-2 border-dashed border-border flex items-center justify-center",
-              topDiscard && "border-solid",
-              isMyTurn && gameState.turnPhase === 'draw' && topDiscard && canPickDiscard() && "cursor-pointer hover:border-primary",
-              isMyTurn && gameState.turnPhase === 'draw' && topDiscard && !canPickDiscard() && "cursor-not-allowed opacity-60"
-            )}
-          >
-            <AnimatePresence mode="popLayout">
-              {topDiscard ? (
-                <motion.div
-                  key={topDiscard.id}
-                  initial={{ scale: 0.5, opacity: 0, rotateY: 90 }}
-                  animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <PlayingCard card={topDiscard} />
-                </motion.div>
-              ) : (
-                <span className="text-[10px] text-muted-foreground">Empty</span>
-              )}
-            </AnimatePresence>
-          </motion.div>
-          <span className="text-[10px] text-muted-foreground">Discard ({gameState.discardPile.length})</span>
-        </div>
+        {(() => {
+          const canAutoMeld = isMyTurn && gameState.turnPhase === 'draw' && topDiscard && discardAutoMeld();
+          const canPick = isMyTurn && gameState.turnPhase === 'draw' && topDiscard && canPickDiscard();
+          return (
+            <div className="text-center space-y-1">
+              <motion.div
+                onClick={
+                  canAutoMeld ? autoDrawAndMeld
+                  : canPick ? drawFromDiscard
+                  : isMyTurn && gameState.turnPhase === 'draw' && topDiscard ? () => toast.error('No matching cards in your hand for this discard!')
+                  : undefined
+                }
+                animate={
+                  canAutoMeld
+                    ? { scale: [1, 1.08, 1], boxShadow: ['0 0 0 0 hsl(var(--primary) / 0)', '0 0 20px 6px hsl(var(--primary) / 0.4)', '0 0 0 0 hsl(var(--primary) / 0)'] }
+                    : drawAnim === 'discard' ? { scale: [1, 0.9, 1] } : {}
+                }
+                transition={canAutoMeld ? { duration: 1.2, repeat: Infinity } : { duration: 0.3 }}
+                className={cn(
+                  "w-[52px] h-[74px] rounded-lg border-2 border-dashed border-border flex items-center justify-center relative",
+                  topDiscard && "border-solid",
+                  canAutoMeld && "cursor-pointer border-primary ring-2 ring-primary/60 bg-primary/10",
+                  !canAutoMeld && canPick && "cursor-pointer hover:border-primary",
+                  !canAutoMeld && !canPick && isMyTurn && gameState.turnPhase === 'draw' && topDiscard && "cursor-not-allowed opacity-60"
+                )}
+              >
+                <AnimatePresence mode="popLayout">
+                  {topDiscard ? (
+                    <motion.div
+                      key={topDiscard.id}
+                      initial={{ scale: 0.5, opacity: 0, rotateY: 90 }}
+                      animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <PlayingCard card={topDiscard} />
+                    </motion.div>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">Empty</span>
+                  )}
+                </AnimatePresence>
+                {canAutoMeld && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute -bottom-6 text-[9px] font-bold text-primary whitespace-nowrap"
+                  >
+                    ✨ Tap to auto-meld!
+                  </motion.div>
+                )}
+              </motion.div>
+              <span className={cn("text-[10px] text-muted-foreground", canAutoMeld && "mt-4 block")}>
+                Discard ({gameState.discardPile.length})
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Game info */}
         {gameState.lastAction && (
