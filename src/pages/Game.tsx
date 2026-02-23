@@ -1197,7 +1197,13 @@ export default function GamePage() {
             </Button>
           </div>
           <span className="text-xs text-muted-foreground">
-            Pts: {calculateHandPoints(myHand)}
+            Pts: {calculateHandPoints(myHand.filter(c => {
+              const validHeldIds = holdGroups
+                .filter(g => g.length >= 3 && isValidMeld(g))
+                .flat()
+                .map(gc => gc.id);
+              return !validHeldIds.includes(c.id);
+            }))}
           </span>
         </div>
         <div className="flex gap-1 flex-wrap justify-center items-end">
