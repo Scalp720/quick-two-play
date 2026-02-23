@@ -1469,6 +1469,41 @@ export default function GamePage() {
                 {gameState.winner === playerIndex ? 'You Win! RAWR!' : '🦴 You Lose...'}
               </motion.h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
+              
+              {/* Show both players' hands on Fight or Stock out */}
+              {(gameState.winMethod?.includes('Fight') || gameState.winMethod?.includes('Stock out')) && (
+                <div className="w-full space-y-3 pt-2">
+                  {gameState.players.map((player, pIdx) => (
+                    <div key={pIdx} className={cn(
+                      "rounded-lg p-2 border",
+                      gameState.winner === pIdx ? "border-accent bg-accent/10" : "border-border bg-muted/30"
+                    )}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn(
+                          "text-xs font-bold",
+                          gameState.winner === pIdx ? "text-accent" : "text-muted-foreground"
+                        )}>
+                          {player.name} {gameState.winner === pIdx ? '👑' : ''} {pIdx === playerIndex ? '(You)' : ''}
+                        </span>
+                        <span className={cn(
+                          "text-xs font-mono font-bold",
+                          gameState.winner === pIdx ? "text-accent" : "text-destructive"
+                        )}>
+                          {calculateHandPoints(player.hand)} pts
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-0.5 justify-center">
+                        {player.hand.map(card => (
+                          <div key={card.id} className="transform scale-[0.55] origin-top-left -mr-4 -mb-6">
+                            <PlayingCard card={card} small />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex flex-col gap-3 items-center pt-2">
                 {gameState.rematchRequested === playerIndex ? (
                   <p className="text-sm text-muted-foreground animate-pulse">Waiting for opponent to accept...</p>
