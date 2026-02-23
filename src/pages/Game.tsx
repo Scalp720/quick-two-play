@@ -1517,6 +1517,7 @@ export default function GamePage() {
                     const handCards = player.hand.filter(c => !validHeldIds.includes(c.id));
                     const handPoints = calculateHandPoints(handCards);
                     const holdPoints = calculateHandPoints(validHoldGroups.flat());
+                    const flipDelay = pIdx * 0.8; // stagger between players
                     
                     return (
                     <div key={pIdx} className={cn(
@@ -1544,23 +1545,37 @@ export default function GamePage() {
                           )}
                         </div>
                       </div>
-                      {/* Hand cards */}
-                      <div className="flex flex-wrap gap-0.5 justify-center">
-                        {handCards.map(card => (
-                          <div key={card.id} className="transform scale-[0.55] origin-top-left -mr-4 -mb-6">
+                      {/* Hand cards - flip reveal */}
+                      <div className="flex flex-wrap gap-0.5 justify-center" style={{ perspective: '600px' }}>
+                        {handCards.map((card, cIdx) => (
+                          <motion.div
+                            key={card.id}
+                            className="transform scale-[0.55] origin-top-left -mr-4 -mb-6"
+                            initial={{ rotateY: 180 }}
+                            animate={{ rotateY: 0 }}
+                            transition={{ delay: flipDelay + cIdx * 0.08, duration: 0.5, ease: 'easeOut' }}
+                            style={{ transformStyle: 'preserve-3d' }}
+                          >
                             <PlayingCard card={card} small />
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
-                      {/* Valid hold groups separated */}
+                      {/* Valid hold groups separated - flip reveal */}
                       {validHoldGroups.length > 0 && (
                         <div className="mt-2 pt-1 border-t border-border/50">
                           <span className="text-[10px] text-muted-foreground">Hold (Valid):</span>
-                          <div className="flex flex-wrap gap-0.5 justify-center mt-0.5">
-                            {validHoldGroups.flat().map(card => (
-                              <div key={card.id} className="transform scale-[0.55] origin-top-left -mr-4 -mb-6 opacity-60">
+                          <div className="flex flex-wrap gap-0.5 justify-center mt-0.5" style={{ perspective: '600px' }}>
+                            {validHoldGroups.flat().map((card, cIdx) => (
+                              <motion.div
+                                key={card.id}
+                                className="transform scale-[0.55] origin-top-left -mr-4 -mb-6 opacity-60"
+                                initial={{ rotateY: 180 }}
+                                animate={{ rotateY: 0 }}
+                                transition={{ delay: flipDelay + handCards.length * 0.08 + cIdx * 0.08, duration: 0.5, ease: 'easeOut' }}
+                                style={{ transformStyle: 'preserve-3d' }}
+                              >
                                 <PlayingCard card={card} small />
-                              </div>
+                              </motion.div>
                             ))}
                           </div>
                         </div>
