@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  GameState, Card, initializeGame, generatePlayerId, isValidMeld,
+  GameState, Card, ChatMessage, initializeGame, generatePlayerId, isValidMeld,
   canLayOff, canLayOffMultiple, calculateHandPoints, sortHand, sortByRank, sortByGroups, getSuitSymbol, getSuitColor,
 } from '@/lib/tongits';
 import { PlayingCard, CardBack } from '@/components/game/PlayingCard';
 import { CoinFlip } from '@/components/game/CoinFlip';
 import { MeldDisplay } from '@/components/game/MeldDisplay';
 import { EmotePicker, EmoteBubble } from '@/components/game/EmoteDisplay';
+import { ChatOverlay } from '@/components/game/ChatOverlay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -679,6 +680,21 @@ export default function GamePage() {
     });
   }, [gameState, playerIndex, updateGame]);
 
+  const sendChat = useCallback((text: string) => {
+    if (!gameState || playerIndex < 0) return;
+    const msg: ChatMessage = {
+      id: crypto.randomUUID(),
+      playerIndex,
+      playerName: gameState.players[playerIndex]?.name || 'Player',
+      text,
+      timestamp: Date.now(),
+    };
+    updateGame({
+      ...gameState,
+      chatMessages: [...(gameState.chatMessages || []), msg],
+    });
+  }, [gameState, playerIndex, updateGame]);
+
   const copyRoomCode = () => {
     const url = `${window.location.origin}/game/${roomCode}`;
     navigator.clipboard.writeText(url);
@@ -923,7 +939,6 @@ export default function GamePage() {
   const sortedHand = sortMode === 'rank' ? sortByRank(visibleHand) : sortMode === 'group' ? sortByGroups(visibleHand) : sortHand(visibleHand);
   const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
 
-  
 
   return (
     <div className="min-h-screen felt-texture flex flex-col overflow-hidden">
@@ -1583,6 +1598,15 @@ export default function GamePage() {
 
       </div>{/* end main game area */}
       </div>{/* end flex row */}
+
+      {/* Chat overlay */}
+      {gameState && playerIndex >= 0 && (
+        <ChatOverlay
+          messages={gameState.chatMessages || []}
+          onSend={sendChat}
+          playerIndex={playerIndex}
+        />
+      )}
     </div>
   );
 }
