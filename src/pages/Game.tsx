@@ -623,30 +623,52 @@ export default function GamePage() {
     }
 
     playFight();
+    // Save hold groups into game state so they persist for fight resolution
+    const newPlayers = gameState.players.map((p, i) => 
+      i === playerIndex ? { ...p, holdGroups } : p
+    );
     updateGame({
       ...gameState,
+      players: newPlayers,
       fightChallenger: playerIndex,
       lastAction: `${me?.name} is challenging to a Fight! ⚔️`,
     });
-  }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me]);
+  }, [gameState, isMyTurn, myHand, playerIndex, updateGame, me, holdGroups]);
 
   const acceptFight = useCallback(() => {
     if (!gameState || gameState.fightChallenger === null || gameState.fightChallenger === undefined) return;
     const challengerIdx = gameState.fightChallenger;
-    const challengerPoints = calculateHandPoints(gameState.players[challengerIdx].hand);
+    // Save defender's hold groups too
+    const newPlayers = gameState.players.map((p, i) =>
+      i === playerIndex ? { ...p, holdGroups } : p
+    );
+    
+    // Calculate points excluding valid hold groups for each player
+    const getEffectivePoints = (pIdx: number) => {
+      const player = newPlayers[pIdx];
+      const playerHoldGroups = player.holdGroups || [];
+      const validHeldIds = playerHoldGroups
+        .filter(g => g.length >= 3 && isValidMeld(g))
+        .flat()
+        .map(c => c.id);
+      return calculateHandPoints(player.hand.filter(c => !validHeldIds.includes(c.id)));
+    };
+    
+    const challengerPoints = getEffectivePoints(challengerIdx);
     const defenderIdx = challengerIdx === 0 ? 1 : 0;
-    const defenderPoints = calculateHandPoints(gameState.players[defenderIdx].hand);
+    const defenderPoints = getEffectivePoints(defenderIdx);
     const winner = challengerPoints <= defenderPoints ? challengerIdx : defenderIdx;
 
     playFight();
     updateGame({
       ...gameState,
+      players: newPlayers,
       phase: 'finished',
       winner,
       fightChallenger: null,
       winMethod: `Fight! ${gameState.players[winner].name} wins with ${Math.min(challengerPoints, defenderPoints)} vs ${Math.max(challengerPoints, defenderPoints)} points!`,
     });
-  }, [gameState, updateGame]);
+  }, [gameState, updateGame, playerIndex, holdGroups]);
 
   const declineFight = useCallback(() => {
     if (!gameState || gameState.fightChallenger === null || gameState.fightChallenger === undefined) return;
@@ -1473,7 +1495,15 @@ export default function GamePage() {
               {/* Show both players' hands on Fight or Stock out */}
               {(gameState.winMethod?.includes('Fight') || gameState.winMethod?.includes('Stock out')) && (
                 <div className="w-full space-y-3 pt-2">
-                  {gameState.players.map((player, pIdx) => (
+                  {gameState.players.map((player, pIdx) => {
+                    const playerHoldGroups = player.holdGroups || [];
+                    const validHoldGroups = playerHoldGroups.filter(g => g.length >= 3 && isValidMeld(g));
+                    const validHeldIds = validHoldGroups.flat().map(c => c.id);
+                    const handCards = player.hand.filter(c => !validHeldIds.includes(c.id));
+                    const handPoints = calculateHandPoints(handCards);
+                    const holdPoints = calculateHandPoints(validHoldGroups.flat());
+                    
+                    return (
                     <div key={pIdx} className={cn(
                       "rounded-lg p-2 border",
                       gameState.winner === pIdx ? "border-green-500 bg-green-500/10" : "border-border bg-muted/30"
@@ -1485,22 +1515,44 @@ export default function GamePage() {
                         )}>
                           {player.name} {gameState.winner === pIdx ? '👑' : ''} {pIdx === playerIndex ? '(You)' : ''}
                         </span>
-                        <span className={cn(
-                          "text-xs font-mono font-bold",
-                          gameState.winner === pIdx ? "text-green-500" : "text-destructive"
-                        )}>
-                          {calculateHandPoints(player.hand)} pts
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "text-xs font-mono font-bold",
+                            gameState.winner === pIdx ? "text-green-500" : "text-destructive"
+                          )}>
+                            {handPoints} pts
+                          </span>
+                          {validHoldGroups.length > 0 && (
+                            <span className="text-xs font-mono text-muted-foreground">
+                              (Hold: {holdPoints} pts)
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {/* Hand cards */}
                       <div className="flex flex-wrap gap-0.5 justify-center">
-                        {player.hand.map(card => (
+                        {handCards.map(card => (
                           <div key={card.id} className="transform scale-[0.55] origin-top-left -mr-4 -mb-6">
                             <PlayingCard card={card} small />
                           </div>
                         ))}
                       </div>
+                      {/* Valid hold groups separated */}
+                      {validHoldGroups.length > 0 && (
+                        <div className="mt-2 pt-1 border-t border-border/50">
+                          <span className="text-[10px] text-muted-foreground">Hold (Valid):</span>
+                          <div className="flex flex-wrap gap-0.5 justify-center mt-0.5">
+                            {validHoldGroups.flat().map(card => (
+                              <div key={card.id} className="transform scale-[0.55] origin-top-left -mr-4 -mb-6 opacity-60">
+                                <PlayingCard card={card} small />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
