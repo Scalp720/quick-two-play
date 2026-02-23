@@ -233,15 +233,25 @@ export default function GamePage() {
   const drawFromDeck = useCallback(() => {
     if (!gameState || !isMyTurn || gameState.turnPhase !== 'draw') return;
     if (gameState.deck.length === 0) {
-      // Stock out - determine winner by points
-      const p0Points = calculateHandPoints(gameState.players[0].hand);
-      const p1Points = calculateHandPoints(gameState.players[1].hand);
+      // Stock out - determine winner by effective points (excluding valid hold groups)
+      const newPlayers = gameState.players.map((p, i) =>
+        i === playerIndex ? { ...p, holdGroups } : p
+      );
+      const getEffPts = (pIdx: number) => {
+        const player = newPlayers[pIdx];
+        const hg = player.holdGroups || [];
+        const validIds = hg.filter(g => g.length >= 3 && isValidMeld(g)).flat().map(c => c.id);
+        return calculateHandPoints(player.hand.filter(c => !validIds.includes(c.id)));
+      };
+      const p0Points = getEffPts(0);
+      const p1Points = getEffPts(1);
       const winner = p0Points <= p1Points ? 0 : 1;
       updateGame({
-        ...gameState,
+        ...newPlayers[0] ? { ...gameState, players: newPlayers } : gameState,
+        players: newPlayers,
         phase: 'finished',
         winner,
-        winMethod: `Stock out! ${gameState.players[winner].name} wins with ${Math.min(p0Points, p1Points)} points!`,
+        winMethod: `Stock out! ${newPlayers[winner].name} wins with ${Math.min(p0Points, p1Points)} vs ${Math.max(p0Points, p1Points)} points!`,
       });
       return;
     }
@@ -1600,18 +1610,24 @@ export default function GamePage() {
                         )}>
                           {player.name} {gameState.winner === pIdx ? '👑' : ''} {pIdx === playerIndex ? '(You)' : ''}
                         </span>
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                           <span className={cn(
                             "text-xs font-mono font-bold",
                             gameState.winner === pIdx ? "text-green-500" : "text-destructive"
                           )}>
-                            {handPoints} pts
+                            Hand: {handPoints} pts
                           </span>
                           {validHoldGroups.length > 0 && (
-                            <span className="text-xs font-mono text-muted-foreground">
-                              (Hold: {holdPoints} pts)
+                            <span className="text-xs font-mono text-green-400/70 line-through">
+                              Hold: {holdPoints} pts
                             </span>
                           )}
+                          <span className={cn(
+                            "text-xs font-mono font-bold px-1 rounded",
+                            gameState.winner === pIdx ? "bg-green-500/20 text-green-500" : "bg-destructive/20 text-destructive"
+                          )}>
+                            Total: {handPoints} pts
+                          </span>
                         </div>
                       </div>
                       {/* Hand cards - flip reveal */}
