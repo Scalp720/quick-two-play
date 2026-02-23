@@ -1447,23 +1447,23 @@ export default function GamePage() {
                     alt="Dancing dino"
                     className="w-32 h-32 object-contain"
                   />
-                  {/* Confetti burst */}
-                  {['🎉', '⭐', '🌟', '🎊', '💫', '✨'].map((emoji, i) => (
+                  {/* Confetti burst - throwing upward */}
+                  {['🎉', '⭐', '🌟', '🎊', '💫', '✨', '🎉', '⭐'].map((emoji, i) => (
                     <motion.div
                       key={i}
                       className="absolute text-2xl"
-                      style={{ left: '50%', top: '50%' }}
+                      style={{ left: '50%', bottom: '60%' }}
                       animate={{
-                        x: [0, (Math.random() - 0.5) * 120],
-                        y: [0, (Math.random() - 0.5) * 120],
-                        opacity: [0, 1, 0],
-                        scale: [0, 1.5, 0],
-                        rotate: [0, 360],
+                        x: [(Math.random() - 0.5) * 20, (Math.random() - 0.5) * 100],
+                        y: [0, -80 - Math.random() * 100, 60],
+                        opacity: [0, 1, 1, 0],
+                        scale: [0.3, 1.2, 0.8, 0],
+                        rotate: [0, (Math.random() - 0.5) * 360],
                       }}
                       transition={{
-                        duration: 1.5,
+                        duration: 1.8,
                         repeat: Infinity,
-                        delay: i * 0.3,
+                        delay: i * 0.25,
                         ease: 'easeOut',
                       }}
                     >
