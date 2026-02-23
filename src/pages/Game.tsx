@@ -1476,18 +1476,18 @@ export default function GamePage() {
                   {gameState.players.map((player, pIdx) => (
                     <div key={pIdx} className={cn(
                       "rounded-lg p-2 border",
-                      gameState.winner === pIdx ? "border-accent bg-accent/10" : "border-border bg-muted/30"
+                      gameState.winner === pIdx ? "border-green-500 bg-green-500/10" : "border-border bg-muted/30"
                     )}>
                       <div className="flex items-center justify-between mb-1">
                         <span className={cn(
                           "text-xs font-bold",
-                          gameState.winner === pIdx ? "text-accent" : "text-muted-foreground"
+                          gameState.winner === pIdx ? "text-green-500" : "text-muted-foreground"
                         )}>
                           {player.name} {gameState.winner === pIdx ? '👑' : ''} {pIdx === playerIndex ? '(You)' : ''}
                         </span>
                         <span className={cn(
                           "text-xs font-mono font-bold",
-                          gameState.winner === pIdx ? "text-accent" : "text-destructive"
+                          gameState.winner === pIdx ? "text-green-500" : "text-destructive"
                         )}>
                           {calculateHandPoints(player.hand)} pts
                         </span>
