@@ -465,12 +465,34 @@ export default function GamePage() {
         lastAction: `${me?.name} called Tong Its!`,
       });
     } else {
-      playMeld();
-      updateGame({
-        ...gameState,
-        players: newPlayers,
-        lastAction: `${me?.name} melded ${cards.length} cards`,
-      });
+      // Check if effective points = 0 (all remaining cards in valid hold groups)
+      const validHeldIds = holdGroups
+        .filter(g => g.length >= 3 && isValidMeld(g))
+        .flat()
+        .map(c => c.id);
+      const effectiveHand = newHand.filter(c => !validHeldIds.includes(c.id));
+      const effectivePoints = calculateHandPoints(effectiveHand);
+      
+      if (effectivePoints === 0 && validHeldIds.length > 0) {
+        playWin();
+        const updatedPlayers = [...newPlayers];
+        updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], holdGroups };
+        updateGame({
+          ...gameState,
+          players: updatedPlayers,
+          phase: 'finished',
+          winner: playerIndex,
+          winMethod: `Tong Its! ${me?.name} has 0 points!`,
+          lastAction: `${me?.name} declared Tong Its with 0 points!`,
+        });
+      } else {
+        playMeld();
+        updateGame({
+          ...gameState,
+          players: newPlayers,
+          lastAction: `${me?.name} melded ${cards.length} cards`,
+        });
+      }
     }
     setSelectedCards([]);
   }, [gameState, isMyTurn, myHand, heldCards, selectedCards, playerIndex, updateGame, me, drawnFromDiscard]);
@@ -524,11 +546,33 @@ export default function GamePage() {
         winMethod: `Tong Its! ${me?.name} wins by sapaw!`,
       });
     } else {
-      updateGame({
-        ...gameState,
-        players: newPlayers,
-        lastAction: `${me?.name} sapaw'd ${cards.length} card(s)`,
-      });
+      // Check if effective points = 0 after sapaw
+      const validHeldIds = holdGroups
+        .filter(g => g.length >= 3 && isValidMeld(g))
+        .flat()
+        .map(c => c.id);
+      const effectiveHand = newHand.filter(c => !validHeldIds.includes(c.id));
+      const effectivePoints = calculateHandPoints(effectiveHand);
+      
+      if (effectivePoints === 0 && validHeldIds.length > 0) {
+        playWin();
+        const updatedPlayers = [...newPlayers];
+        updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], holdGroups };
+        updateGame({
+          ...gameState,
+          players: updatedPlayers,
+          phase: 'finished',
+          winner: playerIndex,
+          winMethod: `Tong Its! ${me?.name} has 0 points!`,
+          lastAction: `${me?.name} declared Tong Its with 0 points via sapaw!`,
+        });
+      } else {
+        updateGame({
+          ...gameState,
+          players: newPlayers,
+          lastAction: `${me?.name} sapaw'd ${cards.length} card(s)`,
+        });
+      }
     }
     setSelectedCards([]);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, updateGame, me]);
@@ -594,18 +638,43 @@ export default function GamePage() {
           lastAction: `${me?.name} called Tong Its!`,
         });
       } else {
-        updateGame({
-          ...gameState,
-          discardPile: [...gameState.discardPile, card],
-          players: newPlayers,
-          currentTurn: nextTurn,
-          turnPhase: 'draw',
-          lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
-        });
+        // Remove discarded card from hold groups first
+        const updatedHoldGroups = holdGroups.map(g => g.filter(c => c.id !== card.id)).filter(g => g.length > 0);
+        
+        // Check if effective points = 0 after discard
+        const validHeldIds = updatedHoldGroups
+          .filter(g => g.length >= 3 && isValidMeld(g))
+          .flat()
+          .map(c => c.id);
+        const effectiveHand = newHand.filter(c => !validHeldIds.includes(c.id));
+        const effectivePoints = calculateHandPoints(effectiveHand);
+        
+        if (effectivePoints === 0 && validHeldIds.length > 0) {
+          playWin();
+          const updatedPlayers = [...newPlayers];
+          updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], holdGroups: updatedHoldGroups };
+          updateGame({
+            ...gameState,
+            discardPile: [...gameState.discardPile, card],
+            players: updatedPlayers,
+            phase: 'finished',
+            winner: playerIndex,
+            winMethod: `Tong Its! ${me?.name} has 0 points!`,
+            lastAction: `${me?.name} declared Tong Its with 0 points!`,
+          });
+        } else {
+          updateGame({
+            ...gameState,
+            discardPile: [...gameState.discardPile, card],
+            players: newPlayers,
+            currentTurn: nextTurn,
+            turnPhase: 'draw',
+            lastAction: `${me?.name} discarded ${card.rank}${getSuitSymbol(card.suit)}`,
+          });
+        }
+        setHoldGroups(updatedHoldGroups);
       }
       setSelectedCards([]);
-      // Remove discarded card from hold groups if it was held
-      setHoldGroups(prev => prev.map(g => g.filter(c => c.id !== card.id)).filter(g => g.length > 0));
       setDrawnFromDiscard(null);
     }, 300);
   }, [gameState, isMyTurn, myHand, selectedCards, playerIndex, opponentIndex, updateGame, me, canSelectedCardSapaw, drawnFromDiscard]);
@@ -1507,8 +1576,8 @@ export default function GamePage() {
               </motion.h2>
               <p className="text-sm text-muted-foreground">{gameState.winMethod}</p>
               
-              {/* Show both players' hands on Fight or Stock out */}
-              {(gameState.winMethod?.includes('Fight') || gameState.winMethod?.includes('Stock out')) && (
+              {/* Show both players' hands on Fight, Stock out, or 0-point Tong Its */}
+              {(gameState.winMethod?.includes('Fight') || gameState.winMethod?.includes('Stock out') || gameState.winMethod?.includes('0 points')) && (
                 <div className="w-full space-y-3 pt-2">
                   {gameState.players.map((player, pIdx) => {
                     const playerHoldGroups = player.holdGroups || [];
