@@ -15,6 +15,14 @@ export interface Meld {
   owner: number; // player index
 }
 
+export interface ChatMessage {
+  id: string;
+  playerIndex: number;
+  playerName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface GameState {
   deck: Card[];
   discardPile: Card[];
@@ -32,8 +40,9 @@ export interface GameState {
   winMethod: string | null;
   lastAction: string | null;
   rematchRequested?: number | null;
-  fightChallenger?: number | null; // player index who called fight
-  firstPlayer?: number; // result of coin flip
+  fightChallenger?: number | null;
+  firstPlayer?: number;
+  chatMessages?: ChatMessage[];
 }
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
