@@ -23,6 +23,7 @@ export interface GameState {
     melds: Meld[];
     playerId: string;
     name: string;
+    holdGroups?: Card[][];
   }[];
   currentTurn: number;
   phase: 'waiting' | 'coin_flip' | 'playing' | 'finished';
