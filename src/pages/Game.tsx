@@ -737,6 +737,7 @@ export default function GamePage() {
     const challengerPoints = getEffectivePoints(challengerIdx);
     const defenderIdx = challengerIdx === 0 ? 1 : 0;
     const defenderPoints = getEffectivePoints(defenderIdx);
+    // Challenger wins ties
     const winner = challengerPoints <= defenderPoints ? challengerIdx : defenderIdx;
 
     playFight();
@@ -796,6 +797,8 @@ export default function GamePage() {
       // Preserve themes
       (newGame.players[0] as any).theme = (gameState.players[0] as any).theme;
       (newGame.players[1] as any).theme = (gameState.players[1] as any).theme;
+      // Preserve chat messages across rematches
+      newGame.chatMessages = gameState.chatMessages || [];
       await updateGame(newGame);
       setSelectedCards([]);
       setHoldGroups([]);
