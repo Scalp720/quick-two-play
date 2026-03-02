@@ -245,13 +245,15 @@ export default function GamePage() {
       };
       const p0Points = getEffPts(0);
       const p1Points = getEffPts(1);
-      const winner = p0Points <= p1Points ? 0 : 1;
+      // Current player (who tried to draw) wins ties
+      const winner = p0Points === p1Points ? playerIndex : (p0Points < p1Points ? 0 : 1);
+      const loser = winner === 0 ? 1 : 0;
       updateGame({
-        ...newPlayers[0] ? { ...gameState, players: newPlayers } : gameState,
+        ...gameState,
         players: newPlayers,
         phase: 'finished',
         winner,
-        winMethod: `Stock out! ${newPlayers[winner].name} wins with ${Math.min(p0Points, p1Points)} vs ${Math.max(p0Points, p1Points)} points!`,
+        winMethod: `Stock out! ${newPlayers[winner].name} wins with ${getEffPts(winner)} vs ${getEffPts(loser)} points!`,
       });
       return;
     }
@@ -739,6 +741,7 @@ export default function GamePage() {
     const defenderPoints = getEffectivePoints(defenderIdx);
     // Challenger wins ties
     const winner = challengerPoints <= defenderPoints ? challengerIdx : defenderIdx;
+    const loser = winner === challengerIdx ? defenderIdx : challengerIdx;
 
     playFight();
     updateGame({
@@ -747,7 +750,7 @@ export default function GamePage() {
       phase: 'finished',
       winner,
       fightChallenger: null,
-      winMethod: `Fight! ${gameState.players[winner].name} wins with ${Math.min(challengerPoints, defenderPoints)} vs ${Math.max(challengerPoints, defenderPoints)} points!`,
+      winMethod: `Fight! ${newPlayers[winner].name} wins with ${getEffectivePoints(winner)} vs ${getEffectivePoints(loser)} points!`,
     });
   }, [gameState, updateGame, playerIndex, holdGroups]);
 
@@ -1240,13 +1243,11 @@ export default function GamePage() {
         </div>
       )}
 
-      {!isMyTurn && gameState.phase === 'playing' && gameState.fightChallenger === undefined || gameState.fightChallenger === null ? (
-        !isMyTurn && gameState.phase === 'playing' && (
-          <div className="text-center py-2 text-sm text-muted-foreground">
-            Waiting for {opponent?.name}'s move...
-          </div>
-        )
-      ) : null}
+      {!isMyTurn && gameState.phase === 'playing' && (gameState.fightChallenger === undefined || gameState.fightChallenger === null) && (
+        <div className="text-center py-2 text-sm text-muted-foreground">
+          Waiting for {opponent?.name}'s move...
+        </div>
+      )}
 
       {/* Fight challenge notification for opponent */}
       {gameState.phase === 'playing' && gameState.fightChallenger !== null && gameState.fightChallenger !== undefined && gameState.fightChallenger !== playerIndex && (
