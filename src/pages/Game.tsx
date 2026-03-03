@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
-import { FloatingDinos, Sparkles } from '@/components/game/FloatingDinos';
+import { FloatingDinos, Sparkles, VictoryFireworks, Fireflies } from '@/components/game/FloatingDinos';
 import dinoDance from '@/assets/dino-dance.gif';
 
 export default function GamePage() {
@@ -1520,9 +1520,10 @@ export default function GamePage() {
               initial={{ scale: 0.5, y: 50 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              className="bg-card border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm w-full relative overflow-hidden"
+              className="glass-panel rounded-2xl p-8 text-center space-y-4 max-w-sm w-full relative overflow-hidden"
             >
-              <Sparkles color={gameState.winner === playerIndex ? myTheme.colors.primary : '0 0% 50%'} count={12} />
+              <Sparkles color={gameState.winner === playerIndex ? myTheme.colors.primary : '0 0% 50%'} count={14} />
+              {gameState.winner === playerIndex && <VictoryFireworks color={myTheme.colors.primary} />}
               {gameState.winner === playerIndex ? (
                 <motion.div className="relative mx-auto w-32 h-32">
                   <img

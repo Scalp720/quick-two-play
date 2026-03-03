@@ -91,12 +91,32 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(145 55% 45% / 0.4)" },
           "50%": { boxShadow: "0 0 0 10px hsl(145 55% 45% / 0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
+        "twinkle": {
+          "0%, 100%": { opacity: "0", transform: "scale(0) rotate(0deg)" },
+          "50%": { opacity: "1", transform: "scale(1) rotate(180deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "card-deal": "card-deal 0.4s ease-out",
         "pulse-gold": "pulse-gold 2s infinite",
+        "float": "float 3s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "twinkle": "twinkle 2s ease-in-out infinite",
       },
     },
   },
