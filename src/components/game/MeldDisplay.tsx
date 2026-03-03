@@ -1,5 +1,6 @@
 import { Meld, getSuitSymbol, getSuitColor } from '@/lib/tongits';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface MeldDisplayProps {
   melds: Meld[];
@@ -16,15 +17,18 @@ export function MeldDisplay({ melds, label, onLayOff, canLayOff, highlightedMeld
     <div className="space-y-1.5">
       {label && <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>}
       <div className="flex flex-wrap gap-2">
-        {melds.map((meld) => {
+        {melds.map((meld, meldIdx) => {
           const isHighlighted = highlightedMeldIds.includes(meld.id);
           return (
-            <div
+            <motion.div
               key={meld.id}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: meldIdx * 0.1, type: 'spring' }}
               onClick={() => canLayOff && onLayOff?.(meld.id)}
               className={cn(
                 "flex gap-0.5 p-1.5 rounded-lg bg-secondary/50 border border-border transition-all duration-200",
-                canLayOff && "cursor-pointer hover:border-primary",
+                canLayOff && "cursor-pointer hover:border-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.2)]",
                 isHighlighted && "border-primary ring-2 ring-primary/50 bg-primary/10 animate-pulse"
               )}
             >
@@ -44,7 +48,7 @@ export function MeldDisplay({ melds, label, onLayOff, canLayOff, highlightedMeld
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           );
         })}
       </div>
