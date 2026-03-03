@@ -125,8 +125,8 @@ export function GameLobby() {
 
   return (
     <div className="min-h-screen felt-texture aurora-bg flex items-center justify-center p-4 relative overflow-hidden">
-      <FloatingDinos count={15} />
-      <Fireflies count={25} />
+      <FloatingDinos count={8} />
+      <Fireflies count={12} />
       
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
