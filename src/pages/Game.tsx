@@ -1719,7 +1719,7 @@ export default function GamePage() {
 
       {/* Spotify Player */}
       <SpotifyPlayer 
-        className="bottom-4 right-20" // placed beside the chat overlay
+        className="bottom-[4.5rem] right-4 sm:bottom-4 sm:right-20" // Over chat on mobile, side-by-side on desktop
         syncState={gameState?.spotifyState}
         onSyncStateChange={(newState) => {
           if (gameState && roomId) {

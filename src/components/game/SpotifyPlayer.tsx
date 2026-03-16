@@ -51,10 +51,17 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
     if (syncState.playing !== playing) {
       setPlaying(syncState.playing);
       if (syncState.playing) {
-        audio.play().catch(console.error);
+        audio.play().catch((err) => {
+          console.warn("Autoplay prevented on sync:", err);
+          // Don't revert playing state in UI, so user knows it *should* be playing 
+          // and might just need a tap on the screen
+        });
       } else {
         audio.pause();
       }
+    } else if (syncState.playing && audio.paused && audio.src) {
+      // Force play if it was supposed to be playing but got paused (e.g. after src change)
+      audio.play().catch(e => console.warn("Force play failed:", e));
     }
 
     // 3. Time Sync (only if diff > 1.5s to prevent stutter)
@@ -141,12 +148,21 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
     setCurrent(prev => {
       const next = (prev + dir + TRACKS.length) % TRACKS.length;
       audio.src = TRACKS[next].src;
-      if (playing) audio.play().catch(console.error);
+      // Capture the current playing state directly from the ref
+      const currentlyPlaying = playingRef.current;
+      if (currentlyPlaying) {
+        audio.play().catch(console.error);
+      }
       setProgress(0);
-      triggerSync({ currentTrack: next, progress: 0 });
+      
+      // Delay the sync trigger slightly to allow local state to settle
+      setTimeout(() => {
+        triggerSync({ currentTrack: next, progress: 0, playing: currentlyPlaying });
+      }, 50);
+      
       return next;
     });
-  }, [playing, triggerSync]);
+  }, [triggerSync]);
 
   const toggleMute = useCallback(() => {
     const audio = audioRef.current;
@@ -169,17 +185,21 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
       <AnimatePresence>
         {open && (
           <motion.div
+            drag
+            dragConstraints={{ left: -300, right: 300, top: -500, bottom: 50 }}
+            dragElastic={0.1}
+            dragMomentum={false}
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="mb-3 rounded-2xl overflow-hidden shadow-2xl w-72 backdrop-blur-xl border border-border/40"
+            className="mb-3 rounded-2xl overflow-hidden shadow-2xl w-64 sm:w-72 backdrop-blur-xl border border-border/40 fixed bottom-16 right-0 sm:bottom-0 sm:right-0 sm:relative origin-bottom-right"
             style={{
               background: 'hsl(var(--card) / 0.9)',
               boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
             }}
           >
-            <div className="p-4 space-y-3">
+            <div className="p-3 sm:p-4 space-y-3 cursor-grab active:cursor-grabbing">
               {/* Track info */}
               <div className="text-center">
                 <motion.p
@@ -262,12 +282,19 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
                       const audio = audioRef.current;
                       if (audio) {
                         audio.src = t.src;
-                        if (playing) audio.play().catch(console.error);
+                        const currentlyPlaying = playingRef.current;
+                        if (currentlyPlaying) {
+                          audio.play().catch(console.error);
+                        }
                         setProgress(0);
-                        triggerSync({ currentTrack: i, progress: 0 });
+                        
+                        // Delay sync slightly for DOM to catch up
+                        setTimeout(() => {
+                          triggerSync({ currentTrack: i, progress: 0, playing: currentlyPlaying });
+                        }, 50);
                       }
                     }}
-                    className={`w-full text-left text-xs px-2 py-1.5 rounded-lg transition-colors ${
+                    className={`w-full text-left text-[10px] sm:text-xs px-2 py-1.5 rounded-lg transition-colors ${
                       i === current
                         ? 'bg-primary/20 text-primary font-semibold'
                         : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -286,7 +313,7 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setOpen(!open)}
-        className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-border/40 relative"
+        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-border/40 relative ml-auto"
         style={{
           background: playing
             ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'

@@ -65,6 +65,10 @@ export function ChatOverlay({ messages, onSend, playerIndex }: ChatOverlayProps)
       <AnimatePresence>
         {open && (
           <motion.div
+            drag
+            dragConstraints={{ left: -300, right: 300, top: -500, bottom: 50 }}
+            dragElastic={0.1}
+            dragMomentum={false}
             initial={{ y: 300, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 300, opacity: 0 }}
@@ -72,8 +76,8 @@ export function ChatOverlay({ messages, onSend, playerIndex }: ChatOverlayProps)
             className="fixed bottom-0 right-0 left-0 z-50 sm:left-auto sm:right-4 sm:bottom-4 sm:w-80"
           >
             <div className="bg-card border border-border rounded-t-xl sm:rounded-xl shadow-2xl flex flex-col max-h-[50vh]">
-              {/* Header */}
-              <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+              {/* Header (Drag Handle) */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border cursor-grab active:cursor-grabbing">
                 <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
                   <MessageCircle className="w-4 h-4" /> Chat
                 </span>
