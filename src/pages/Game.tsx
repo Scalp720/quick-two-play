@@ -19,6 +19,7 @@ import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
 import { FloatingDinos, Sparkles, VictoryFireworks, Fireflies } from '@/components/game/FloatingDinos';
+import { SpotifyPlayer } from '@/components/game/SpotifyPlayer';
 import dinoDance from '@/assets/dino-dance.gif';
 
 export default function GamePage() {
