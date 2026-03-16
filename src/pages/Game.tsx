@@ -19,6 +19,7 @@ import { Copy, ArrowLeft } from 'lucide-react';
 import { playCardDraw, playCardDiscard, playMeld, playWin, playLose, playClick, playFight } from '@/lib/sounds';
 import { getThemeById, getSavedTheme } from '@/lib/dinoThemes';
 import { FloatingDinos, Sparkles, VictoryFireworks, Fireflies } from '@/components/game/FloatingDinos';
+import { SpotifyPlayer } from '@/components/game/SpotifyPlayer';
 import dinoDance from '@/assets/dino-dance.gif';
 
 export default function GamePage() {
@@ -851,6 +852,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
         <FloatingDinos count={8} />
+        <SpotifyPlayer />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -881,6 +883,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
         <FloatingDinos count={10} />
+        <SpotifyPlayer />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -938,6 +941,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center relative overflow-hidden">
         <FloatingDinos count={8} />
+        <SpotifyPlayer />
         <div className="text-center space-y-6 z-10">
           {/* Walking dino animation */}
           <motion.div
@@ -1027,6 +1031,7 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen felt-texture flex flex-col overflow-hidden">
+      <SpotifyPlayer />
       {/* Top bar */}
       <div className="flex items-center justify-between p-3 border-b border-border/50">
         <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground">
