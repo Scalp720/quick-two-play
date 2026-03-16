@@ -941,6 +941,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center relative overflow-hidden">
         <FloatingDinos count={8} />
+        <SpotifyPlayer />
         <div className="text-center space-y-6 z-10">
           {/* Walking dino animation */}
           <motion.div
