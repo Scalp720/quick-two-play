@@ -128,6 +128,7 @@ export function GameLobby() {
     <div className="min-h-screen felt-texture aurora-bg flex items-center justify-center p-4 relative overflow-hidden">
       <FloatingDinos count={8} />
       <Fireflies count={12} />
+      <SpotifyPlayer />
       
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
