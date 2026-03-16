@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music } from 'lucide-react';
 
-const PLAYLIST_ID = '37i9dQZF1DWYmDNATKqPDd'; // Bad Bunny essentials
+const EMBED_URL = 'https://open.spotify.com/embed/artist/4q3ewBCX7sLwd24euuV69X?utm_source=generator';
 
 export function SpotifyPlayer() {
   const [open, setOpen] = useState(false);
