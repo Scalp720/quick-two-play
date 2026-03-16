@@ -35,18 +35,18 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
 
   useEffect(() => {
     if (!syncState || !audioRef.current) return;
-    
+
     // Set flag so we don't infinitely re-trigger updates
     isSyncingRef.current = true;
-    
+
     const audio = audioRef.current;
-    
+
     // 1. Check if track changed
     if (current !== syncState.currentTrack) {
       setCurrent(syncState.currentTrack);
       audio.src = TRACKS[syncState.currentTrack].src;
     }
-    
+
     // 2. Play/Pause
     if (syncState.playing !== playing) {
       setPlaying(syncState.playing);
@@ -68,7 +68,7 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
     // We estimate what the progress should be now, assuming lastUpdated was accurate.
     const timeSinceUpdate = (Date.now() - syncState.lastUpdated) / 1000; // in seconds
     const targetTime = (syncState.progress * (audio.duration || 0)) + (syncState.playing ? timeSinceUpdate : 0);
-    
+
     if (audio.duration && Math.abs(audio.currentTime - targetTime) > 1.5) {
       audio.currentTime = targetTime;
     }
@@ -85,7 +85,7 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
       const audio = audioRef.current;
       const duration = audio?.duration || 1;
       const prog = (audio?.currentTime || 0) / duration;
-      
+
       onSyncStateChange({
         playing,
         currentTrack: current,
@@ -154,12 +154,12 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
         audio.play().catch(console.error);
       }
       setProgress(0);
-      
+
       // Delay the sync trigger slightly to allow local state to settle
       setTimeout(() => {
         triggerSync({ currentTrack: next, progress: 0, playing: currentlyPlaying });
       }, 50);
-      
+
       return next;
     });
   }, [triggerSync]);
@@ -201,16 +201,19 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
           >
             <div className="p-3 sm:p-4 space-y-3 cursor-grab active:cursor-grabbing">
               {/* Track info */}
-              <div className="text-center">
-                <motion.p
-                  key={current}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm font-bold text-foreground truncate"
-                >
-                  🎵 {TRACKS[current].title}
-                </motion.p>
-                <p className="text-[10px] text-muted-foreground">Bad Bunny Vibes 🐰</p>
+              <div className="flex items-center gap-3">
+                <img src="/badbunny.jpg" alt="Bad Bunny" className="w-12 h-12 rounded-md object-cover shadow-sm ring-1 ring-border/50 bg-secondary" />
+                <div className="flex-1 min-w-0">
+                  <motion.p
+                    key={current}
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-sm font-bold text-foreground truncate"
+                  >
+                    🎵 {TRACKS[current].title}
+                  </motion.p>
+                  <p className="text-[10px] text-muted-foreground">Bad Bunny Vibes 🐰</p>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -287,18 +290,17 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
                           audio.play().catch(console.error);
                         }
                         setProgress(0);
-                        
+
                         // Delay sync slightly for DOM to catch up
                         setTimeout(() => {
                           triggerSync({ currentTrack: i, progress: 0, playing: currentlyPlaying });
                         }, 50);
                       }
                     }}
-                    className={`w-full text-left text-[10px] sm:text-xs px-2 py-1.5 rounded-lg transition-colors ${
-                      i === current
+                    className={`w-full text-left text-[10px] sm:text-xs px-2 py-1.5 rounded-lg transition-colors ${i === current
                         ? 'bg-primary/20 text-primary font-semibold'
                         : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                    }`}
+                      }`}
                   >
                     {i === current && playing ? '▶ ' : `${i + 1}. `}{t.title}
                   </motion.button>
