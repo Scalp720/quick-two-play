@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FloatingDinos, Sparkles, HeartBubbles, Fireflies } from './FloatingDinos';
+import { SpotifyPlayer } from './SpotifyPlayer';
 
 function ThemeCard({ theme, selected, onClick }: { theme: DinoTheme; selected: boolean; onClick: () => void }) {
   return (
