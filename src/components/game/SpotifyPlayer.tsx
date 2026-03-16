@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const TRACKS = [
   { title: 'DtMF', src: '/music/DtMF.mp3' },
@@ -8,13 +9,86 @@ const TRACKS = [
   { title: 'Tití Me Preguntó', src: '/music/Titi_Me_Pregunto.mp3' },
 ];
 
-export function SpotifyPlayer() {
+interface SpotifyState {
+  playing: boolean;
+  currentTrack: number;
+  progress: number;
+  lastUpdated: number;
+}
+
+interface SpotifyPlayerProps {
+  syncState?: SpotifyState;
+  onSyncStateChange?: (state: SpotifyState) => void;
+  className?: string; // Add optional className
+}
+
+export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'bottom-4 right-4' }: SpotifyPlayerProps) {
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const [muted, setMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // --- NEW: Sync Logic ---
+  const isSyncingRef = useRef(false);
+
+  useEffect(() => {
+    if (!syncState || !audioRef.current) return;
+    
+    // Set flag so we don't infinitely re-trigger updates
+    isSyncingRef.current = true;
+    
+    const audio = audioRef.current;
+    
+    // 1. Check if track changed
+    if (current !== syncState.currentTrack) {
+      setCurrent(syncState.currentTrack);
+      audio.src = TRACKS[syncState.currentTrack].src;
+    }
+    
+    // 2. Play/Pause
+    if (syncState.playing !== playing) {
+      setPlaying(syncState.playing);
+      if (syncState.playing) {
+        audio.play().catch(console.error);
+      } else {
+        audio.pause();
+      }
+    }
+
+    // 3. Time Sync (only if diff > 1.5s to prevent stutter)
+    // We estimate what the progress should be now, assuming lastUpdated was accurate.
+    const timeSinceUpdate = (Date.now() - syncState.lastUpdated) / 1000; // in seconds
+    const targetTime = (syncState.progress * (audio.duration || 0)) + (syncState.playing ? timeSinceUpdate : 0);
+    
+    if (audio.duration && Math.abs(audio.currentTime - targetTime) > 1.5) {
+      audio.currentTime = targetTime;
+    }
+
+    // Free the flag
+    setTimeout(() => { isSyncingRef.current = false; }, 100);
+
+  }, [syncState]); // Intentionally omitting playing/current to avoid local loopbacks.
+
+  // Helper to publish changes if prop is provided
+  const triggerSync = useCallback((updates: Partial<SpotifyState>) => {
+    if (isSyncingRef.current) return;
+    if (onSyncStateChange) {
+      const audio = audioRef.current;
+      const duration = audio?.duration || 1;
+      const prog = (audio?.currentTime || 0) / duration;
+      
+      onSyncStateChange({
+        playing,
+        currentTrack: current,
+        progress: prog,
+        lastUpdated: Date.now(),
+        ...updates
+      });
+    }
+  }, [playing, current, onSyncStateChange]);
+
 
   useEffect(() => {
     const audio = new Audio(TRACKS[0].src);
@@ -23,6 +97,7 @@ export function SpotifyPlayer() {
 
     audio.addEventListener('timeupdate', () => {
       if (audio.duration) setProgress(audio.currentTime / audio.duration);
+      // Optional: don't bombard the server with timeupdates, just sync explicit actions.
     });
 
     audio.addEventListener('ended', () => {
@@ -30,7 +105,8 @@ export function SpotifyPlayer() {
       setCurrent(prev => {
         const next = (prev + 1) % TRACKS.length;
         audio.src = TRACKS[next].src;
-        audio.play();
+        if (playing) audio.play();
+        triggerSync({ currentTrack: next, progress: 0 });
         return next;
       });
     });
@@ -39,18 +115,25 @@ export function SpotifyPlayer() {
       audio.pause();
       audio.src = '';
     };
-  }, []);
+  }, []); // Note: playing state dependency removed from hook array to avoid closure trap, see below.
+
+  // Keep triggerSync up to date over event listeners using ref if needed.
+  const playingRef = useRef(playing);
+  useEffect(() => { playingRef.current = playing; }, [playing]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (playing) {
+    const isPlaying = playing;
+    if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      audio.play().catch(console.error);
     }
-    setPlaying(!playing);
-  }, [playing]);
+    setPlaying(!isPlaying);
+    const prog = audio.duration ? (audio.currentTime / audio.duration) : 0;
+    triggerSync({ playing: !isPlaying, progress: prog });
+  }, [playing, triggerSync]);
 
   const changeTrack = useCallback((dir: 1 | -1) => {
     const audio = audioRef.current;
@@ -58,11 +141,12 @@ export function SpotifyPlayer() {
     setCurrent(prev => {
       const next = (prev + dir + TRACKS.length) % TRACKS.length;
       audio.src = TRACKS[next].src;
-      if (playing) audio.play();
+      if (playing) audio.play().catch(console.error);
       setProgress(0);
+      triggerSync({ currentTrack: next, progress: 0 });
       return next;
     });
-  }, [playing]);
+  }, [playing, triggerSync]);
 
   const toggleMute = useCallback(() => {
     const audio = audioRef.current;
@@ -77,10 +161,11 @@ export function SpotifyPlayer() {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     audio.currentTime = pct * audio.duration;
+    triggerSync({ progress: pct });
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className={cn("fixed z-[60]", className)}>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -177,8 +262,9 @@ export function SpotifyPlayer() {
                       const audio = audioRef.current;
                       if (audio) {
                         audio.src = t.src;
-                        if (playing) audio.play();
+                        if (playing) audio.play().catch(console.error);
                         setProgress(0);
+                        triggerSync({ currentTrack: i, progress: 0 });
                       }
                     }}
                     className={`w-full text-left text-xs px-2 py-1.5 rounded-lg transition-colors ${

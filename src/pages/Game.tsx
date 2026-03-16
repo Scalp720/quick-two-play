@@ -852,7 +852,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
         <FloatingDinos count={8} />
-        <SpotifyPlayer />
+        <SpotifyPlayer className="bottom-4 right-20" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -883,7 +883,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
         <FloatingDinos count={10} />
-        <SpotifyPlayer />
+        <SpotifyPlayer className="bottom-4 right-20" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -941,7 +941,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center relative overflow-hidden">
         <FloatingDinos count={8} />
-        <SpotifyPlayer />
+        <SpotifyPlayer className="bottom-4 right-20" />
         <div className="text-center space-y-6 z-10">
           {/* Walking dino animation */}
           <motion.div
@@ -1031,7 +1031,6 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen felt-texture flex flex-col overflow-hidden">
-      <SpotifyPlayer />
       {/* Top bar */}
       <div className="flex items-center justify-between p-3 border-b border-border/50">
         <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground">
@@ -1717,6 +1716,20 @@ export default function GamePage() {
           playerIndex={playerIndex}
         />
       )}
+
+      {/* Spotify Player */}
+      <SpotifyPlayer 
+        className="bottom-4 right-20" // placed beside the chat overlay
+        syncState={gameState?.spotifyState}
+        onSyncStateChange={(newState) => {
+          if (gameState && roomId) {
+            updateGame({
+              ...gameState,
+              spotifyState: newState 
+            });
+          }
+        }}
+      />
     </div>
   );
 }

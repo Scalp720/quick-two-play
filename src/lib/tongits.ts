@@ -43,6 +43,12 @@ export interface GameState {
   fightChallenger?: number | null;
   firstPlayer?: number;
   chatMessages?: ChatMessage[];
+  spotifyState?: {
+    playing: boolean;
+    currentTrack: number;
+    progress: number;
+    lastUpdated: number;
+  };
 }
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -179,6 +185,12 @@ export function initializeGame(player1Id: string, player2Id: string, player1Name
     winMethod: null,
     lastAction: null,
     firstPlayer,
+    spotifyState: {
+      playing: false,
+      currentTrack: 0,
+      progress: 0,
+      lastUpdated: Date.now(),
+    },
   };
 }
 
