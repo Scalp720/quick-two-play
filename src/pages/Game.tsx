@@ -1031,6 +1031,7 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen felt-texture flex flex-col overflow-hidden">
+      <SpotifyPlayer />
       {/* Top bar */}
       <div className="flex items-center justify-between p-3 border-b border-border/50">
         <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground">
