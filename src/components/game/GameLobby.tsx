@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FloatingDinos, Sparkles, HeartBubbles, Fireflies } from './FloatingDinos';
+import { SpotifyPlayer } from './SpotifyPlayer';
 
 function ThemeCard({ theme, selected, onClick }: { theme: DinoTheme; selected: boolean; onClick: () => void }) {
   return (
@@ -127,6 +128,7 @@ export function GameLobby() {
     <div className="min-h-screen felt-texture aurora-bg flex items-center justify-center p-4 relative overflow-hidden">
       <FloatingDinos count={8} />
       <Fireflies count={12} />
+      <SpotifyPlayer />
       
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
