@@ -883,6 +883,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen felt-texture flex items-center justify-center p-4 relative overflow-hidden">
         <FloatingDinos count={10} />
+        <SpotifyPlayer />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
