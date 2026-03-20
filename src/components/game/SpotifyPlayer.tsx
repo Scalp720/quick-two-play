@@ -4,9 +4,30 @@ import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX } from 'luc
 import { cn } from '@/lib/utils';
 
 const TRACKS = [
+  { title: 'Andrea', src: '/music/Andrea.mp3' },
+  { title: 'BAILE INoLVIDABLE', src: '/music/BAILE INoLVIDABLE.mp3' },
+  { title: 'CAFé CON RON', src: '/music/CAFé CON RON.mp3' },
   { title: 'DtMF', src: '/music/DtMF.mp3' },
+  { title: 'DÁKITI', src: '/music/DÁKITI.mp3' },
+  { title: 'EL CLúB', src: '/music/EL CLúB.mp3' },
+  { title: 'Enséñame a Bailar', src: '/music/Enséñame a Bailar.mp3' },
   { title: 'EoO', src: '/music/EoO.mp3' },
+  { title: 'LA CANCIÓN', src: '/music/LA CANCIÓN.mp3' },
+  { title: 'La Romana', src: '/music/La Romana.mp3' },
+  { title: 'MONACO', src: '/music/MONACO.mp3' },
+  { title: 'Me Fui de Vacaciones', src: '/music/Me Fui de Vacaciones.mp3' },
+  { title: 'Me Porto Bonito', src: '/music/Me Porto Bonito.mp3' },
+  { title: 'Moscow Mule', src: '/music/Moscow Mule.mp3' },
+  { title: 'NUEVAYoL', src: '/music/NUEVAYoL.mp3' },
+  { title: 'Ojitos Lindos', src: '/music/Ojitos Lindos.mp3' },
+  { title: 'PERFuMITO NUEVO', src: '/music/PERFuMITO NUEVO.mp3' },
+  { title: 'PERRO NEGRO', src: '/music/PERRO NEGRO.mp3' },
+  { title: 'Safaera', src: '/music/Safaera.mp3' },
   { title: 'Tití Me Preguntó', src: '/music/Titi_Me_Pregunto.mp3' },
+  { title: 'VeLDÁ', src: '/music/VeLDÁ.mp3' },
+  { title: 'WELTiTA', src: '/music/WELTiTA.mp3' },
+  { title: 'Yo No Soy Celoso', src: '/music/Yo No Soy Celoso.mp3' },
+  { title: 'Yo Perreo Sola', src: '/music/Yo Perreo Sola.mp3' },
 ];
 
 interface SpotifyState {
@@ -275,7 +296,7 @@ export function SpotifyPlayer({ syncState, onSyncStateChange, className = 'botto
               </div>
 
               {/* Track list */}
-              <div className="space-y-1">
+              <div className="space-y-1 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                 {TRACKS.map((t, i) => (
                   <motion.button
                     key={t.title}
