@@ -303,6 +303,22 @@ export function GameLobby() {
                 </Button>
               </motion.div>
             </div>
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={() => navigate('/solitaire')}
+                variant="secondary"
+                className="w-full font-bold text-lg h-12 relative overflow-hidden"
+                style={{
+                  background: `hsl(var(--secondary))`,
+                  color: `hsl(${currentTheme.colors.primary})`,
+                  border: `2px solid hsl(${currentTheme.colors.primary} / 0.3)`,
+                }}
+              >
+                <img src={currentTheme.image} alt={currentTheme.name} className="w-6 h-6 object-contain mr-1 inline-block" />
+                Play Solitaire
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
 

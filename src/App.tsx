@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 
 const Game = lazy(() => import("./pages/Game"));
+const Solitaire = lazy(() => import("./pages/Solitaire"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/game/:roomCode" element={<Game />} />
+            <Route path="/solitaire" element={<Solitaire />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
